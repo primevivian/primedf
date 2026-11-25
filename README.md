@@ -97,6 +97,8 @@ calculator/PrimeDF.hpppl   the HP Prime app program (HP PPL)
 converter/                 the PC converter (Python package, tests, exe packaging)
 docs/INSTALL.md            detailed setup and troubleshooting
 docs/DESIGN.md             architecture, file format, performance notes
+docs/HPAPPDIR_FORMAT.md    reverse-engineered HP Prime app package format
+tools/                     PPL checker, .hpappdir inspector
 ```
 
 ## Contributing
