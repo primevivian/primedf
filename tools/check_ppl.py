@@ -12,7 +12,8 @@ Structure
 Proven on hardware (docs/HARDWARE_NOTES.md):
 * a function parameter named "i" is a syntax error: i is the imaginary unit
   (test 8, editor Check pointed at it). "e" is treated the same as a precaution.
-* a LOCAL variable named "ok" is a syntax error (step 2d, Check pointed at it).
+* more than 8 names in one LOCAL statement: the 9th was a syntax error
+  (step 2d, Check pointed at it; test 4 used "ok" as a 4th name and booted).
 * "a!=b" is NOT a not-equal test in PPL. It parses as a! = b (factorial),
   compiles, passes the editor's Check, and crashes at run time on strings,
   silently and past IFERR. For not-equal use "<>", "≠" or NOT(a==b)
@@ -123,11 +124,12 @@ def check(path: Path) -> list[str]:
             errors.append(f"{path}:{i}: ELSE IF on one line; use ELSE + nested IF ... END")
         lm = re.match(r"\s*LOCAL\s+(.*?);?\s*$", code)
         if lm:
-            for decl in lm.group(1).split(","):
+            names = lm.group(1).split(",")
+            if len(names) > 8:
+                errors.append(f"{path}:{i}: {len(names)} names in one LOCAL; a 9th name was a "
+                              "syntax error on hardware, keep it to 8")
+            for decl in names:
                 var = decl.split(":=")[0].strip()
-                if var.lower() == "ok":
-                    errors.append(f"{path}:{i}: a variable named '{var}' is a syntax error "
-                                  "on the Prime (reserved); rename it")
                 if APP_VARS.match(var):
                     errors.append(f"{path}:{i}: LOCAL {var} clashes with app variable "
                                   f"{var.upper()}")

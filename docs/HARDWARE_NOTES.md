@@ -103,7 +103,7 @@ END;
 | **`a != b`** | **BROKEN**: it's `a! = b` (§1) | t6 key 4 |
 | `<>`, `≠`, `NOT(a==b)` as not-equal | **Confirmed OK** | t7 keys 1–4 |
 | **A function parameter named `i`**, e.g. `PdPick(lst,i)` | **Syntax error** (Check points at the `i`). `i` is the imaginary unit. `LOCAL i` and `FOR i` passed Check (step 2). | t8 |
-| **A `LOCAL` variable named `ok`**, e.g. `LOCAL w,h,k,ok;` | **Syntax error** (Check stopped at `ok`). `ok` seems to be reserved. Everything above it compiled, including the parameters `files`, `sel`, `top` and the locals `out`, `fn`, `nm`, `w`, `h`, `s`. | step 2d |
+| **A 9th name in one `LOCAL` statement**, e.g. `LOCAL w,h,s,dw,dh,x0,y0,k,ok;` | **Syntax error** (Check stopped at the 9th name). It's not the name: test 4 declared `ok` as a 4th name and booted. 8 names compiled (step 2 original). Also explains test 5 (14 names) and the 0.2.0 viewer (14 names). Per statement or per function? Do parameters count? → t9a–c | step 2d |
 | `FOR … FROM … TO … DO`, `WHILE var DO`, `<=`, `>=`, `OR`, `AND` chains | **Confirmed OK** | t8 |
 | User functions as arguments, e.g. `RECT_P(…,PdBg(),PdBg())` | **Confirmed OK** | t8 |
 | `LEFT`, `MIN`, `MAX`, `IP`; list parameter indexed in a function; apostrophe in a string; decimal literals; `IFERR` containing `IF` | **Confirmed OK** | t8 |
@@ -123,8 +123,11 @@ END;
 | `t5-diag` | each t3 suspect in its own `IFERR`, results table | ❌ (the `!=`, past `IFERR`) |
 | `t6-keys` | each suspect on its own number key | ✅ boots. Every key OK **except 4 (`!=`)**, which crashes. |
 | `t7-notequal` | `<>`, `≠`, `NOT(==)`, and what `!=` computes on numbers | ✅ all keys OK |
-| step 2d (menu) | step 2c with `==` only | ❌ Function screen. Check: **syntax error, line 140, at `ok`** (`LOCAL …,k,ok;`). Compile errors stop the whole program, which is why its error screen never showed. |
-| step 2e (menu) | step 2d with `ok` renamed to `loaded` (and `run` renamed to `going`, as a precaution) | pending |
+| step 2d (menu) | step 2c with `==` only | ❌ Function screen. Check: **syntax error, line 140, at `ok`**, the **9th** name in `LOCAL w,h,s,dw,dh,x0,y0,k,ok;`. Compile errors stop the whole program, which is why its error screen never showed. |
+| step 2e (menu) | step 2d with at most 8 names per `LOCAL` (`run` renamed to `going` as a precaution) | pending |
+| `t9a-local-9-names` | one `LOCAL` with 9 names (expected to fail; confirms the limit) | pending |
+| `t9b-local-split` | 13 locals over two `LOCAL` statements | pending: boots = the limit is per statement |
+| `t9c-params-plus-locals` | 3 parameters + 8 locals | pending: boots = parameters don't count |
 | `t8-menu-parts` | each construct step 2d uses that no passing test covered: `FOR`, `<=`/`>=`, user functions inside arguments, `LEFT`/`MIN`/`MAX`/`IP`, a list parameter, `WHILE` + `AND` chain, an apostrophe in a string, and step 2d's exact text helpers | ❌ first version: Check reported a **syntax error** at the parameter `i` in `PdPick(lst,i)`. ✅ after renaming it: every key OK, the pink box was drawn, and the text was centered. |
 
 ## 6. How to run a hardware test

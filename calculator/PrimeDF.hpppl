@@ -9,8 +9,8 @@
 //  Hardware lessons (see docs/HARDWARE_NOTES.md for the full record):
 //  - If the app opens on the Function screen, run Check in the program
 //    editor first: a syntax error is shown with the cursor right on it.
-//  - Reserved names: a parameter named "i" and a variable named "ok"
-//    are syntax errors.
+//  - A parameter named "i" is a syntax error, and so is a 9th name in
+//    one LOCAL statement (keep each LOCAL to 8 names).
 //  - "a!=b" is NOT a not-equal test in PPL: it parses as a! = b and
 //    crashes on strings, silently and past IFERR. Use "<>" or "==".
 //  - A run-time error inside START() silently leaves the user on the
@@ -137,22 +137,23 @@ END;
 // Show one page scaled to fit the screen. Esc returns.
 PdShowPage(fn)
 BEGIN
-  LOCAL w,h,s,dw,dh,x0,y0,k,loaded;
+  // At most 8 names per LOCAL (a 9th was a syntax error on hardware).
+  LOCAL w,h,s,dw,dh,x0,y0,k;
   RECT_P(G0,0,0,319,239,PdBg(),PdBg());
   PdCenter("Loading...",110,3,PdInk());
-  loaded:=1;
+  w:=-1;                       // stays -1 if the image fails to load
   IFERR
     G1:=AFiles(fn);
+    w:=GROBW_P(G1); h:=GROBH_P(G1);
   THEN
-    loaded:=0;
+    w:=-1;
   END;
-  IF loaded==0 THEN
+  IF w<0 THEN
     RECT_P(G0,0,0,319,239,PdBg(),PdBg());
     PdCenter("Could not open",88,4,PdInk());
     PdCenter(fn,118,3,PdMuted());
     PdCenter("Esc: back",222,2,PdInk());
   ELSE
-    w:=GROBW_P(G1); h:=GROBH_P(G1);
     s:=MIN(320/w,240/h);
     dw:=ROUND(w*s,0); dh:=ROUND(h*s,0);
     x0:=IP((320-dw)/2); y0:=IP((240-dh)/2);

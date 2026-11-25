@@ -14,7 +14,7 @@ END;
 
 START()
 BEGIN
-  LOCAL k,r1,r2,r3,r4,r5,r6,r7,r8,fl,n,s,w,lst;
+  LOCAL k,r1,r2,r3,r4,r5,r6,r7,r8,fl,n,s,w,lst;   // check_ppl: ignore (14 names: a second bug in this test)
   r1:=1; r2:=1; r3:=1; r4:=1; r5:=1; r6:=1; r7:=1; r8:=1;
 
   IFERR fl:=AFiles(); n:=SIZE(fl); THEN r1:=0; END;

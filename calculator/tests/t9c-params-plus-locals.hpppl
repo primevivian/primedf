@@ -1,0 +1,21 @@
+#pragma mode( separator(.,;) integer(h32) )
+// Test 9c: 3 parameters + 8 locals in one function (11 names).
+// Boots = parameters do not count toward the limit.
+
+PdShow(p1,p2,p3)
+BEGIN
+  LOCAL a1,a2,a3,a4,a5,a6,a7,k;
+  a1:=p1+p2+p3;
+  RECT_P(G0,0,0,319,239,RGB(255,143,171),RGB(255,143,171));
+  TEXTOUT_P("IT BOOTS",G0,95,60,7,RGB(255,255,255));
+  TEXTOUT_P("9c: 3 params + 8 locals",G0,40,110,3,RGB(62,50,72));
+  TEXTOUT_P("press Esc",G0,125,200,3,RGB(62,50,72));
+  REPEAT
+    k:=GETKEY;
+  UNTIL k==4;
+END;
+
+START()
+BEGIN
+  PdShow(1,2,3);
+END;
