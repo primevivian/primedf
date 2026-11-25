@@ -67,15 +67,13 @@ Python.
    Command-line builds for Linux and macOS are on the same page. See
    [converter/README.md](converter/README.md) for command-line options and for
    running the converter from Python source.
-2. **Create the app once:** on the calculator, press <kbd>Apps</kbd>, highlight
-   **Function**, tap **Save**, and name the copy `PrimeDF`.
-3. **Install the program:** in Connectivity Kit, open
-   *Application Library → PrimeDF → Program*. Replace its contents with
-   [`calculator/PrimeDF.hpppl`](calculator/PrimeDF.hpppl) and save. The file is
-   also attached to each release.
-4. **Copy the documents:** drag the `.png` files from that folder onto the **PrimeDF**
-   app in Connectivity Kit's calculator tree.
-5. On the calculator, open **PrimeDF** from the Apps library. Choose **Start** if
+2. **Install the app once:** download `PrimeDF.hpappdir.zip` from the same
+   release and unzip it. Then drag the `PRIMEDF.hpappdir` folder onto
+   **Application Library** in Connectivity Kit. It arrives with the program and
+   its icon.
+3. **Copy the documents:** drag the `.png` files from the converter's output
+   folder onto the **PrimeDF** app in Connectivity Kit's calculator tree.
+4. On the calculator, open **PrimeDF** from the Apps library. Choose **Start** if
    the menu doesn't appear right away.
 
 [`docs/INSTALL.md`](docs/INSTALL.md) has the step-by-step guide with
@@ -98,7 +96,8 @@ converter/                 the PC converter (Python package, tests, exe packagin
 docs/INSTALL.md            detailed setup and troubleshooting
 docs/DESIGN.md             architecture, file format, performance notes
 docs/HPAPPDIR_FORMAT.md    reverse-engineered HP Prime app package format
-tools/                     PPL checker, .hpappdir inspector
+tools/                     PPL checker, .hpappdir inspector and builder
+calculator/app-template/   exported app the release package is built from
 ```
 
 ## Contributing

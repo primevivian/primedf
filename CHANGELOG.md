@@ -15,11 +15,21 @@ All notable changes to this project are documented here. The format follows
   "Sharper zoom" option and an "Open folder" button. On Windows, PDFs can also
   be dropped onto the `.exe` icon.
 - Standalone executables on GitHub Releases, so you don't need Python. The
-  Windows build is the windowed `PrimeDF-windows-x64.exe` with an HP Prime-style
-  icon. Linux and macOS get command-line builds.
+  Windows build is the windowed `PrimeDF-windows-x64.exe`. Linux and macOS get command-line builds.
 - The CLI accepts folders, and opens the window when run without arguments.
+- **Drag-and-drop calculator install**: `PrimeDF.hpappdir.zip`, an app package
+  for Connectivity Kit with the program and a 38×38 pink HP Prime icon
+  (`icon.png`). It's built in CI from an exported template and the current
+  program.
+- `docs/HPAPPDIR_FORMAT.md`: a reverse-engineered reference for HP Prime app
+  packages, with real exports in `docs/format-samples/`.
+  `tools/hpprime_tlv.py` inspects, checks and builds them. CI proves the
+  writer by rebuilding a real Connectivity Kit export byte for byte.
+- The mascot: a pink HP Prime G2 with a happy face, used for the window,
+  the `.exe` and the calculator app.
 - Build workflow that smoke-tests each binary (including a real window run on
-  Windows) and attaches the binaries and `PrimeDF.hpppl` to tagged releases.
+  Windows) and attaches the binaries, `PrimeDF.hpappdir.zip` and
+  `PrimeDF.hpppl` to tagged releases.
 
 ### Changed
 

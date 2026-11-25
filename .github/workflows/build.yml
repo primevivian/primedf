@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
-    paths-ignore: ["**.md", "docs/**", "calculator/**"]
+    paths-ignore: ["**.md", "docs/**"]
   pull_request:
     paths: ["converter/**", ".github/workflows/build.yml"]
   workflow_dispatch:
@@ -47,7 +47,7 @@ jobs:
       - name: Install converter and PyInstaller
         run: pip install ./converter pyinstaller
       - name: Draw the icon
-        run: python converter/packaging/make_icon.py build/primedf.ico build/preview/icon.png
+        run: python converter/packaging/make_icon.py --ico build/primedf.ico --preview build/preview/icon.png --app-icon build/preview/app-icon-38.png
       - name: Build single-file executable
         run: >
           pyinstaller --onefile --noconfirm
@@ -94,9 +94,43 @@ jobs:
           path: dist/${{ matrix.asset }}
           if-no-files-found: error
 
+  calculator-app:
+    name: PrimeDF.hpappdir (calculator app package)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install ./converter
+      - name: Check the program
+        run: python3 tools/check_ppl.py calculator/PrimeDF.hpppl
+      - name: Draw the 38x38 app icon
+        run: python converter/packaging/make_icon.py --app-icon build/icon.png
+      - name: Build the app package from the exported template
+        run: >
+          python3 tools/hpprime_tlv.py build-app
+          --template calculator/app-template/PRIMEDF.hpappdir
+          --program calculator/PrimeDF.hpppl
+          --icon build/icon.png
+          --out pkg/PRIMEDF.hpappdir
+      - name: Verify the package
+        run: |
+          python3 tools/hpprime_tlv.py check pkg/PRIMEDF.hpappdir/*
+          python3 tools/hpprime_tlv.py extract-program pkg/PRIMEDF.hpappdir/PRIMEDF.hpappprgm build/embedded.hpppl
+          tr -d '\r' < calculator/PrimeDF.hpppl | cmp - build/embedded.hpppl
+          echo "embedded program matches calculator/PrimeDF.hpppl"
+      - name: Zip
+        run: cd pkg && zip -r ../PrimeDF.hpappdir.zip PRIMEDF.hpappdir
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PrimeDF.hpappdir.zip
+          path: PrimeDF.hpappdir.zip
+          if-no-files-found: error
+
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    needs: [build, calculator-app]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -105,6 +139,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: dist
+          pattern: "*rime*"  # the binaries and the app package, not the previews
           merge-multiple: true
       - name: Create GitHub release
         env:

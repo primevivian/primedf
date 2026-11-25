@@ -57,7 +57,7 @@ pytest
 
 ```sh
 pip install ./converter pyinstaller
-python converter/packaging/make_icon.py build/primedf.ico
+python converter/packaging/make_icon.py --ico build/primedf.ico
 pyinstaller --onefile --windowed --name PrimeDF --icon build/primedf.ico \
     --collect-all pypdfium2 --collect-all pypdfium2_raw \
     converter/packaging/primedf_gui_entry.py

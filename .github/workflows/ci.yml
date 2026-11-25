@@ -37,5 +37,11 @@ jobs:
       - uses: actions/checkout@v5
       - name: Check block balance and required entry points
         run: python3 tools/check_ppl.py calculator/PrimeDF.hpppl
-      - name: Parse reference .hpappdir samples (verifies the documented format)
-        run: python3 tools/hpprime_tlv.py dump docs/format-samples/*/*.hpappdir/*
+      - name: Reference .hpappdir samples parse and round-trip byte-exactly
+        run: python3 tools/hpprime_tlv.py check docs/format-samples/*/*.hpappdir/*
+      - name: Program injection reproduces a real Connectivity Kit export byte-for-byte
+        run: |
+          python3 tools/hpprime_tlv.py extract-program docs/format-samples/02-with-program/PRIMEDF.hpappdir/PRIMEDF.hpappprgm /tmp/s02.hpppl
+          python3 tools/hpprime_tlv.py build-app --template docs/format-samples/01-function-copy-no-program/PRIMEDF.hpappdir --program /tmp/s02.hpppl --out /tmp/rebuilt/PRIMEDF.hpappdir
+          cmp /tmp/rebuilt/PRIMEDF.hpappdir/PRIMEDF.hpappprgm docs/format-samples/02-with-program/PRIMEDF.hpappdir/PRIMEDF.hpappprgm
+          echo "rebuilt .hpappprgm is identical to the real export"

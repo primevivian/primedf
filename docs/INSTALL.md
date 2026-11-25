@@ -54,31 +54,39 @@ The Windows app runs in command-line mode with `PrimeDF-windows-x64.exe --cli ..
 It doesn't print any output there, so use the Python package if you want to
 see progress in a terminal.
 
-## 3. Create the PrimeDF app (calculator, one time)
+## 3. Install the PrimeDF app (calculator, one time)
 
 PrimeDF is an *app*, so its page images live inside it and its program can read
 them through `AFiles`.
 
-1. Press <kbd>Apps</kbd>.
-2. Highlight **Function** (any built-in app works as the base).
-3. Tap **Save**, enter `PrimeDF`, and confirm.
+### Drag and drop (recommended)
 
-## 4. Install the app program
+1. Download `PrimeDF.hpappdir.zip` from the
+   [latest release](https://github.com/primevivian/primedf/releases/latest) and
+   unzip it. You get a folder called `PRIMEDF.hpappdir`.
+2. Connect the calculator over USB and start **HP Connectivity Kit**.
+3. Drag the `PRIMEDF.hpappdir` folder onto **Application Library** under your
+   calculator in the *Calculators* pane.
 
-1. Connect the calculator over USB and start **HP Connectivity Kit**.
-2. In the *Calculators* pane, expand your calculator, then
-   **Application Library → PrimeDF**.
-3. Double-click **Program** to open the editor.
-4. Delete everything in it, paste the contents of
-   [`calculator/PrimeDF.hpppl`](../calculator/PrimeDF.hpppl), and save
+That's it. The app comes with the program and its pink calculator icon.
+
+> [!NOTE]
+> If the Apps screen shows a plain icon, open PrimeDF once, then go back.
+> Community reports say custom icons sometimes appear only after the app has
+> been opened or saved on the calculator.
+
+### By hand (fallback)
+
+1. On the calculator, press <kbd>Apps</kbd>, highlight **Function**, tap
+   **Save**, enter `PrimeDF`, and confirm.
+2. In Connectivity Kit, expand your calculator, then
+   **Application Library → PrimeDF**, and double-click **Program**.
+3. Replace everything in it with the contents of
+   [`calculator/PrimeDF.hpppl`](../calculator/PrimeDF.hpppl) and save
    (<kbd>Ctrl</kbd>+<kbd>S</kbd>). Connectivity Kit checks the syntax when it
    saves.
 
-You can also type it in on the calculator. Press <kbd>Shift</kbd>+<kbd>1</kbd>
-(Program catalog), open **PrimeDF (App)**, and paste the code. Connectivity Kit
-is much easier.
-
-## 5. Copy page images
+## 4. Copy page images
 
 Drag the `.png` files from your output folder onto the **PrimeDF** entry under
 *Application Library* in Connectivity Kit. They're stored as the app's files.
@@ -86,7 +94,7 @@ Drag the `.png` files from your output folder onto the **PrimeDF** entry under
 To remove a document, delete its `.png` files from the app's files in
 Connectivity Kit.
 
-## 6. Read
+## 5. Read
 
 Press <kbd>Apps</kbd> and open **PrimeDF**. If you land on the Function
 screens instead of the file menu, highlight PrimeDF and tap **Start**. That

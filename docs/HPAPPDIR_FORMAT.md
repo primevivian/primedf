@@ -36,8 +36,11 @@ PRIMEDF.hpappdir/
 - **Hypothesis:** any other file in the folder is one of the app's files
   (`AFiles`). That's how PrimeDF stores its page images. Sample 03 (see §6)
   will confirm it.
-- **Hypothesis:** a file named `icon.png` replaces the app's icon in the Apps
-  library. Size and support are untested.
+- **Hypothesis (community reports):** a file named `icon.png` (or `icon.jpg`)
+  becomes the app's icon in the Apps library. Forum posts cite 38×38 px and
+  say Connectivity Kit scales pictures to 38×38. One report says the icon only
+  appears after the app is edited and saved once on the calculator. PrimeDF
+  ships a 38×38 `icon.png`; hardware confirmation is pending.
 
 ## 2. `.hpappnote`
 
@@ -82,7 +85,8 @@ The tag is 4 bytes:
 | `0x0E`, `0x1E`, `0x3E` (low nibble `E`) | **composite**: a sequence of *elements*, each `el_size:u32` followed by `el_size` bytes of nested records. An element can be empty (`el_size = 0`). | structure **confirmed** |
 | `0x05` | integer, `size - 4` bytes, signed LE (4 or 8 bytes seen) | **confirmed** |
 | `0x08` | real number, 8 bytes, BCD (§3.4) | **confirmed** |
-| `0x0B` | string, UTF-16LE in a fixed 64-byte (32-character) NUL-padded buffer | **confirmed** for names |
+| `0x0B` | name: UTF-16LE in a fixed 64-byte (32-character) NUL-padded buffer | **confirmed** |
+| `0x1B` | text: variable-length UTF-16LE, NUL-terminated (`size - 4` bytes). Used for program source. | **confirmed** (sample 02) |
 | `0x01` | 3 bytes `RR GG BB` color | **confirmed** (the ten default function colors) |
 | `0x03` | 2 bytes | **observed** |
 | `0x06` | 16 bytes, all `FF` in the samples | **observed**. Possibly "undefined" or a complex value. |
@@ -146,14 +150,41 @@ list of 10 entries       each: empty name, 16 bytes of FF
 ```
 
 **There's no PPL source in this sample.** The app was exported before a
-program was pasted in. Where and how the source is stored is the main open
-question (§6).
+program was pasted in.
+
+### 4.3 `.hpappprgm` with a program (sample 02, confirmed)
+
+Pasting the PrimeDF program in Connectivity Kit changes exactly one thing:
+the `Main` function record gets a **third field**, a text record (`0x1B`)
+with tag `9B 00 C0 00` (group 0, field 3) that holds the **plain source code**.
+
+```
+function (0x3E)          group 0x00, field 5
+└─ element
+   ├─ name   0x8B  field 1   'Main'
+   ├─ int    0x85  field 2   0
+   └─ text   0x9B  field 3   the whole PPL program            <- new
+```
+
+- The source is stored **verbatim**: UTF-16LE, LF line endings, and a final
+  NUL character (`00 00`). Decoded, it matched `calculator/PrimeDF.hpppl`
+  byte for byte, apart from the repo file's CRLF line endings.
+- **No compiled code is stored.** The calculator compiles the source itself.
+- The header, the file-level ints and the 10-slot list are unchanged.
+- Sizes are recomputed up the tree: the function record grows by the text
+  record's size, and so does its element.
+- In `.hpapp`, only one byte changed: the high half of file-level int 7 went
+  from `0x12` to `0x11` (meaning unknown). Everything else is identical.
+
+**Verified by construction.** `hpprime_tlv.py build-app` inserts the source
+from sample 02 into sample 01's program file. CI checks that the result is
+identical to sample 02's `.hpappprgm`, so our writer produces exactly what
+Connectivity Kit does. PrimeDF's release package is built this way, from
+`calculator/app-template/` and the current program.
 
 ## 5. Open questions
 
-1. **Where the program source lives.** Is it a UTF-16 string record in
-   `.hpappprgm`, alongside or instead of `Main`, and does it come with
-   compiled data? → sample 02
+1. ~~Where the program source lives.~~ Answered by sample 02 (§4.3).
 2. **App files.** Are they plain files in the folder (likely), and is
    `icon.png` used as the app icon? → sample 03
 3. The meaning of the header's `extra` word, the file-level ints (group
@@ -176,7 +207,7 @@ python3 tools/hpprime_tlv.py dump docs/format-samples/NN-*/*.hpappdir/*
 | # | Folder | How it was made |
 | --- | --- | --- |
 | 01 | `01-function-copy-no-program` | Apps → Function → Save as `PrimeDF`. No program, no files. |
-| 02 | *(wanted)* | Sample 01 plus the PrimeDF program pasted in Connectivity Kit and saved |
+| 02 | `02-with-program` | Sample 01 plus the PrimeDF program (v0.2.0) pasted in Connectivity Kit and saved. |
 | 03 | *(wanted)* | Sample 02 plus one page image (`test.001.png`) added to the app's files |
 
 A minimal change between two samples makes the diff easy to read. Compare
