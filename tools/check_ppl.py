@@ -10,12 +10,13 @@ Structure
 * a function defined twice
 
 Proven on hardware (docs/HARDWARE_NOTES.md):
-* "AFiles()" with empty parentheses: compiles, but fails at run time.
-  Use "AFiles" to get the file list.
+* "a!=b" is NOT a not-equal test in PPL. It parses as a! = b (factorial),
+  compiles, passes the editor's Check, and crashes at run time on strings,
+  silently and past IFERR. Compare with "==" only.
 
-Precautions (style taken from programs known to work; not proven causes):
+Precautions (not proven either way yet):
+* no "<>" or "≠" until one is verified on hardware; use == with IF/ELSE
 * no forward declarations: define every function before it is called
-* "!=" for not-equal, never "<>"
 * no "ELSE IF" on one line: write ELSE, then a nested IF ... END
 * no LOCAL variables named like app variables F0-F9 (apps are based on Function)
 """
@@ -27,7 +28,7 @@ import sys
 from pathlib import Path
 
 OPENERS = {"BEGIN", "IF", "WHILE", "FOR", "CASE", "IFERR"}
-TOKEN = re.compile(r'"(?:[^"\\]|\\.)*"|//[^\n]*|[A-Za-z_][A-Za-z0-9_]*|<>|\n')
+TOKEN = re.compile(r'"(?:[^"\\]|\\.)*"|//[^\n]*|[A-Za-z_][A-Za-z0-9_]*|\n')
 FUNC_HEAD = re.compile(r"^(?:EXPORT\s+)?([A-Za-z_][A-Za-z0-9_]*)\(([^)]*)\)\s*(;)?\s*$")
 CALL = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*\(")
 APP_VARS = re.compile(r"^[Ff][0-9]$")
@@ -55,7 +56,7 @@ def check(path: Path) -> list[str]:
     lines = src.splitlines()
     errors: list[str] = []
 
-    # ---- block balance and "<>" (token based, strings/comments skipped)
+    # ---- block balance (token based, strings/comments skipped)
     stack: list[tuple[str, int]] = []
     line = 1
     for m in TOKEN.finditer(src):
@@ -65,9 +66,7 @@ def check(path: Path) -> list[str]:
             continue
         if tok.startswith(('"', "//")):
             continue
-        if tok == "<>":
-            errors.append(f"{path}:{line}: use != instead of <>")
-        elif tok in OPENERS or tok == "REPEAT":
+        if tok in OPENERS or tok == "REPEAT":
             stack.append((tok, line))
         elif tok == "END":
             if not stack or stack[-1][0] == "REPEAT":
@@ -110,8 +109,13 @@ def check(path: Path) -> list[str]:
         stripped = code.strip()
         if not stripped or "check_ppl: ignore" in raw:  # hardware tests probe bad code on purpose
             continue
-        if re.search(r"\bAFiles\s*\(\s*\)", code):
-            errors.append(f"{path}:{i}: AFiles() fails at run time on the Prime; use AFiles")
+        if "!=" in code:
+            errors.append(f"{path}:{i}: != is not not-equal in PPL (it reads as a! = b); "
+                          "compare with == and use IF/ELSE")
+        for op in ("<>", "≠"):
+            if op in code:
+                errors.append(f"{path}:{i}: {op} is not verified on hardware yet; "
+                              "compare with == and use IF/ELSE")
         if re.search(r"\bELSE\s+IF\b", code):
             errors.append(f"{path}:{i}: ELSE IF on one line; use ELSE + nested IF ... END")
         lm = re.match(r"\s*LOCAL\s+(.*?);?\s*$", code)

@@ -1,0 +1,75 @@
+#pragma mode( separator(.,;) integer(h32) )
+// Test 7: which "not equal" spellings work? One per number key.
+// != crashed in test 6; this checks the alternatives.
+
+PdLine(t,y)
+BEGIN
+  RECT_P(G0,0,y,319,y+17,RGB(255,240,245),RGB(255,240,245));
+  TEXTOUT_P(t,G0,10,y+2,2,RGB(62,50,72));
+END;
+
+// 1: <> on strings
+PdT1()
+BEGIN
+  LOCAL n;
+  n:=0;
+  IF "a"<>"b" THEN n:=1; END;   // check_ppl: ignore (probe)
+  PdLine("1 a<>b on text gives "+n+" (want 1)",150);
+END;
+
+// 2: the ≠ symbol on strings
+PdT2()
+BEGIN
+  LOCAL n;
+  n:=0;
+  IF "a"≠"b" THEN n:=1; END;   // check_ppl: ignore (probe)
+  PdLine("2 a≠b on text gives "+n+" (want 1)",150);
+END;
+
+// 3: NOT(==) on strings
+PdT3()
+BEGIN
+  LOCAL n;
+  n:=0;
+  IF NOT("a"=="b") THEN n:=1; END;
+  PdLine("3 NOT(a==b) on text gives "+n+" (want 1)",150);
+END;
+
+// 4: <> on numbers
+PdT4()
+BEGIN
+  LOCAL n;
+  n:=0;
+  IF 5<>3 THEN n:=1; END;   // check_ppl: ignore (probe)
+  PdLine("4 5<>3 gives "+n+" (want 1)",150);
+END;
+
+// 5: != on numbers (what does it really compute?)
+PdT5()
+BEGIN
+  LOCAL n;
+  n:=0;
+  IF 3!=6 THEN n:=1; END;   // check_ppl: ignore (probe: 3! = 6 is true!)
+  PdLine("5 3!=6 gives "+n+" (1 means it was 3!=6)",150);
+END;
+
+START()
+BEGIN
+  LOCAL k;
+  RECT_P(G0,0,0,319,239,RGB(255,240,245),RGB(255,240,245));
+  RECT_P(G0,0,0,319,27,RGB(255,126,166),RGB(255,126,166));
+  TEXTOUT_P("IT BOOTS  -  test 7",G0,80,5,4,RGB(255,255,255));
+  TEXTOUT_P("Press 1 2 3 4 5 to run a test.",G0,10,40,2,RGB(62,50,72));
+  TEXTOUT_P("If the Function screen appears, that test",G0,10,60,2,RGB(142,130,153));
+  TEXTOUT_P("failed: reopen PrimeDF and try the next.",G0,10,76,2,RGB(142,130,153));
+  TEXTOUT_P("Results:",G0,10,130,2,RGB(62,50,72));
+  TEXTOUT_P("Esc: exit",G0,130,220,2,RGB(62,50,72));
+  REPEAT
+    k:=GETKEY;
+    IF k==42 THEN PdT1(); END;
+    IF k==43 THEN PdT2(); END;
+    IF k==44 THEN PdT3(); END;
+    IF k==37 THEN PdT4(); END;
+    IF k==38 THEN PdT5(); END;
+  UNTIL k==4;
+END;

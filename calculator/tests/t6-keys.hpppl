@@ -40,7 +40,7 @@ PdT4()
 BEGIN
   LOCAL n;
   n:=0;
-  IF "a"!="b" THEN n:=1; END;
+  IF "a"!="b" THEN n:=1; END;   // check_ppl: ignore (crashes: the != bug)
   PdLine("4 != : ok, "+n,150);
 END;
 
@@ -83,7 +83,7 @@ END;
 PdT9()
 BEGIN
   LOCAL fl;
-  fl:=AFiles();   // check_ppl: ignore (this test probes it)
+  fl:=AFiles();
   PdLine("9 AFiles(): ok",150);
 END;
 

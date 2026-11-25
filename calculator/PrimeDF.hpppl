@@ -12,9 +12,11 @@
 //  - A run-time error inside START() silently leaves the user on the
 //    app's Function screen, so START() catches everything and shows an
 //    error screen.
-//  - Style (tools/check_ppl.py): functions defined before use, "!=" for
-//    not equal, no "ELSE IF", "Pd" prefix on function names, and state
-//    passed between functions rather than kept in program-wide variables.
+//  - "a!=b" is NOT a not-equal test in PPL: it parses as a! = b and
+//    crashes on strings, silently and past IFERR. Compare with "==" only.
+//  - Style (tools/check_ppl.py): functions defined before use, no
+//    "ELSE IF", "Pd" prefix on function names, and state passed between
+//    functions rather than kept in program-wide variables.
 // =====================================================================
 
 // ---- colors ---------------------------------------------------------------
@@ -89,8 +91,14 @@ BEGIN
   FOR i FROM 1 TO SIZE(fl) DO
     fn:=fl(i); n:=DIM(fn);
     IF n>4 THEN
-      IF RIGHT(fn,4)==".png" AND fn!="icon.png" THEN
-        out(SIZE(out)+1):=fn;
+      // Only "==" is used for comparisons: "a!=b" is NOT not-equal in PPL
+      // (it reads as a! = b and crashed on hardware, test 6 key 4).
+      IF RIGHT(fn,4)==".png" THEN
+        IF fn=="icon.png" THEN
+          n:=0;
+        ELSE
+          out(SIZE(out)+1):=fn;
+        END;
       END;
     END;
   END;

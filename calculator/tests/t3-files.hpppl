@@ -4,11 +4,11 @@ Boot(where)
 BEGIN
   LOCAL k,fl,i,fn,n,pngs,w;
   pngs:={};
-  fl:=AFiles();   // check_ppl: ignore (this test probes it)
+  fl:=AFiles();
   FOR i FROM 1 TO SIZE(fl) DO
     fn:=fl(i); n:=DIM(fn);
     IF n>4 THEN
-      IF RIGHT(fn,4)==".png" AND fn!="icon.png" THEN
+      IF RIGHT(fn,4)==".png" AND fn!="icon.png" THEN   // check_ppl: ignore (the != bug, kept as a record)
         pngs(SIZE(pngs)+1):=fn;
       END;
     END;

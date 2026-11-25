@@ -14,12 +14,13 @@ All notable changes to this project are documented here. The format follows
     that the package, the icon and `START()` work.
   - Step 2: a pink file menu listing the app's PNG files (up/down, Enter,
     Esc), and a page view that fits the page to the screen.
-  - Hardware findings are recorded in `docs/HARDWARE_NOTES.md`. The key
-    trap: a run-time error in `START()` silently shows the Function screen.
-    The likely culprit was `AFiles()` with empty parentheses.
-- `tools/check_ppl.py` flags `AFiles()`, plus precautions taken from PPL apps
-  known to work: no forward declarations, `!=` instead of `<>`, no `ELSE IF`,
-  and no locals named like app variables.
+  - Root cause found by single-feature hardware tests (`docs/HARDWARE_NOTES.md`):
+    **`a != b` isn't not-equal in PPL.** It reads as `a! = b`, compiles,
+    passes Check, and crashes at run time on strings, silently and past
+    `IFERR`, leaving you on the Function screen.
+- `tools/check_ppl.py` rejects `!=` (proven broken) and, until verified,
+  `<>`/`≠`. It also keeps the precautions: no forward declarations, no
+  `ELSE IF`, and no locals named like app variables.
 
 ## [0.2.0] - 2026-11-25 [WITHDRAWN]
 
