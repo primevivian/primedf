@@ -31,7 +31,9 @@ PrimeDF splits the job in two:
 ```
 
 1. **The converter** (`converter/`, Python) renders each PDF page once on your
-   PC with MuPDF. It crops the margins and writes a compact grayscale PNG.
+   PC with PDFium, Chrome's PDF engine. It crops the margins and writes a
+   compact grayscale PNG. On Windows it's a small app with a window: you drop
+   PDFs onto it.
 2. **The app** (`calculator/PrimeDF.hpppl`) lists the documents stored in its
    app files. It loads pages with the firmware's built-in PNG decoder and draws
    them with `BLIT_P`, which scales natively, so pan and zoom stay fast.
@@ -56,13 +58,13 @@ the bottom-right corner after each change.
 and [HP Connectivity Kit](https://www.hpcalc.org/connectivity/). You don't need
 Python.
 
-1. **Convert your PDFs:** download `primedf-windows-x64.exe` from the
+1. **Convert your PDFs:** download `PrimeDF-windows-x64.exe` from the
    [latest release](https://github.com/primevivian/primedf/releases/latest).
-   It's a single portable file with nothing to install. **Drag one or more PDFs
-   onto it**, or double-click it to choose files. The pages are written to a
-   `primedf_out` folder next to each PDF, and that folder opens when the
-   conversion finishes.
-   Linux and macOS binaries are on the same page. See
+   It's a single portable file with nothing to install. Open it and **drop
+   PDFs into the window**, or click it to choose files. You can also drop PDFs
+   onto the `.exe` itself. The pages of `My Book.pdf` are saved to a
+   `My Book` folder next to it, and **Open folder** takes you there.
+   Command-line builds for Linux and macOS are on the same page. See
    [converter/README.md](converter/README.md) for command-line options and for
    running the converter from Python source.
 2. **Create the app once:** on the calculator, press <kbd>Apps</kbd>, highlight
@@ -71,7 +73,7 @@ Python.
    *Application Library → PrimeDF → Program*. Replace its contents with
    [`calculator/PrimeDF.hpppl`](calculator/PrimeDF.hpppl) and save. The file is
    also attached to each release.
-4. **Copy the documents:** drag the `.png` files from `primedf_out` onto the **PrimeDF**
+4. **Copy the documents:** drag the `.png` files from that folder onto the **PrimeDF**
    app in Connectivity Kit's calculator tree.
 5. On the calculator, open **PrimeDF** from the Apps library. Choose **Start** if
    the menu doesn't appear right away.
@@ -84,9 +86,8 @@ troubleshooting.
 - **Text too small at fit width?** That's normal on a 320×240 screen. Press
   <kbd>+</kbd> three times (≈ 2×) for comfortable reading. The zoom level stays
   the same when you turn pages.
-- **Want crisper zoom?** Convert with `-w 960`, for example
-  `primedf-windows-x64.exe -w 960 book.pdf` in a terminal. Files get bigger and
-  pages load more slowly.
+- **Want crisper zoom?** Tick **Sharper zoom** in the converter window. That
+  renders at 960 px instead of 640. Files get bigger and pages load more slowly.
 - **Storage:** a typical text page is 30–80 KB at the default width.
 
 ## Repository layout

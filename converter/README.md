@@ -5,15 +5,20 @@ The PC-side half of [PrimeDF](../README.md). It rasterizes PDF pages into
 
 ## Standalone executable (recommended)
 
-Download `primedf-windows-x64.exe`, `primedf-linux-x64` or
-`primedf-macos-arm64` from the
+Download from the
 [latest release](https://github.com/primevivian/primedf/releases/latest).
-It needs no Python and nothing to install.
+You need no Python and nothing to install.
 
-- **Drag and drop** PDFs onto the executable, or **double-click** it to pick
-  files. The window stays open until you press Enter, and the output folder
-  opens when the conversion finishes.
-- **Terminal:** `primedf-windows-x64.exe book.pdf notes.pdf [options]`
+- **Windows: `PrimeDF-windows-x64.exe`** is a small window. Drop PDFs (or
+  folders) into it, or click to pick files. Dropping them onto the `.exe` icon
+  works too. **Open folder** shows the result.
+- **Linux / macOS: `primedf-linux-x64`, `primedf-macos-arm64`** are
+  command-line tools that take the options below. Run them without arguments
+  to open the window.
+
+The Windows build is about 15 MB. It bundles Python, Tk for the window, and
+PDFium (Chrome's PDF engine) as a single small native library. It needs no
+imaging library because PNGs are written by `primedf/png.py`.
 
 ## From source
 
@@ -26,8 +31,9 @@ primedf book.pdf notes.pdf
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| *(no PDFs)* | — | Opens a file picker |
-| `-o, --out DIR` | `primedf_out` next to each PDF | Output folder |
+| *(no PDFs)* | — | Opens the converter window |
+| `PDF ...` | — | PDF files, or folders containing PDFs |
+| `-o, --out DIR` | a folder named after each PDF, next to it | Output folder |
 | `-n, --name NAME` | file name | Name shown in the calculator menu (single input only) |
 | `-w, --width PX` | `640` | Pixel width of a typical page's content. 640 gives readable text at 2x fit-width. Use larger values for sharper zoom (bigger files, slower page loads). |
 | `--no-trim` | off | Keep page margins (by default each page is cropped to its content) |
@@ -51,10 +57,12 @@ pytest
 
 ```sh
 pip install ./converter pyinstaller
-pyinstaller --onefile --console --name primedf --collect-all pymupdf \
-    --distpath dist --workpath build --specpath build \
-    converter/packaging/primedf_entry.py
-python converter/packaging/smoke_test.py dist/primedf.exe
+python converter/packaging/make_icon.py build/primedf.ico
+pyinstaller --onefile --windowed --name PrimeDF --icon build/primedf.ico \
+    --collect-all pypdfium2 --collect-all pypdfium2_raw \
+    converter/packaging/primedf_gui_entry.py
+pip install PyMuPDF   # only to generate the smoke-test PDF
+python converter/packaging/smoke_test.py dist/PrimeDF.exe --gui-selftest
 ```
 
 CI (`.github/workflows/build.yml`) builds and smoke-tests all three platforms on

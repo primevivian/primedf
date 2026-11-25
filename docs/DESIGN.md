@@ -12,7 +12,11 @@
 | --- | --- |
 | Parse PDFs in PPL | Impossible. PPL has no byte-level file access. |
 | Parse PDFs in the Prime's MicroPython | Technically possible, but needs pure-Python inflate, a content-stream interpreter, and font rasterization (Type1/CFF/TrueType) running in an interpreter. Expect several seconds per page and unreliable output. |
-| **Rasterize on the PC, decode PNG natively on the Prime** | The firmware's PNG decoder (`AFiles` → GROB) and scaled `BLIT_P` run as native code. Text quality matches MuPDF exactly. **Chosen.** |
+| **Rasterize on the PC, decode PNG natively on the Prime** | The firmware's PNG decoder (`AFiles` → GROB) and scaled `BLIT_P` run as native code. Text quality is exactly PDFium's (Chrome's PDF engine). **Chosen.** |
+
+The converter uses PDFium through `pypdfium2`: a single native library of about
+6 MB. It writes PNGs with its own stdlib-only encoder (`primedf/png.py`) and has
+no imaging library. That keeps the standalone executable small.
 
 ## File format
 

@@ -10,8 +10,7 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 dependencies = [
-    "PyMuPDF>=1.24.3",
-    "Pillow>=10.0",
+    "pypdfium2>=4.30,<5",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -22,10 +21,13 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "ruff>=0.5"]
+dev = ["pytest>=7", "ruff>=0.5", "PyMuPDF>=1.24.3"]  # PyMuPDF only generates test PDFs
 
 [project.scripts]
 primedf = "primedf.cli:main"
+
+[project.gui-scripts]
+primedf-gui = "primedf.gui:main"
 
 [project.urls]
 Homepage = "https://github.com/primevivian/primedf"

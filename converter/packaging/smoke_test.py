@@ -1,6 +1,13 @@
-"""Smoke-test a built ``primedf`` executable: convert a generated PDF.
+"""Smoke-test a built executable by converting a generated PDF.
 
-Usage: python smoke_test.py path/to/primedf[.exe]
+Usage: python smoke_test.py EXE [ARGS...]
+
+Runs ``EXE ARGS... <generated.pdf>`` and checks that the pages land in a
+folder named after the PDF. Examples::
+
+    python smoke_test.py dist/primedf                      # CLI build
+    python smoke_test.py dist/PrimeDF.exe --cli            # windowed build, CLI mode
+    python smoke_test.py dist/PrimeDF.exe --gui-selftest   # windowed build, real window
 """
 
 import subprocess
@@ -13,6 +20,7 @@ import pymupdf
 
 def main() -> int:
     exe = Path(sys.argv[1]).resolve()
+    extra = sys.argv[2:]
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         pdf = tmp_path / "Smoke Test.pdf"
@@ -22,16 +30,13 @@ def main() -> int:
         doc.save(pdf)
         doc.close()
 
-        version = subprocess.run([exe, "--version"], capture_output=True, text=True, check=True)
-        print(version.stdout.strip())
-        subprocess.run([exe, str(pdf)], check=True, timeout=120)
-
-        pages = sorted(p.name for p in (tmp_path / "primedf_out").glob("*.png"))
+        proc = subprocess.run([str(exe), *extra, str(pdf)], timeout=180)
+        pages = sorted(p.name for p in (tmp_path / "Smoke Test").glob("*.png"))
         expected = [f"Smoke_Test.00{i}.png" for i in (1, 2, 3)]
-        if pages != expected:
-            print(f"unexpected output: {pages}", file=sys.stderr)
+        if proc.returncode != 0 or pages != expected:
+            print(f"FAILED: exit code {proc.returncode}, output {pages}", file=sys.stderr)
             return 1
-    print("smoke test passed")
+    print(f"smoke test passed: {exe.name} {' '.join(extra)}")
     return 0
 
 

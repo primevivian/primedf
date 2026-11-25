@@ -10,19 +10,23 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- Standalone converter executables for Windows, Linux and macOS, built with
-  PyInstaller and published on GitHub Releases. Python is no longer needed.
-- Drag-and-drop: drop PDFs onto the executable to convert them. Double-click it
-  to get a file picker. The window stays open, and the output folder opens
-  when the conversion finishes.
-- Running `primedf` with no arguments opens a file picker.
-- Build workflow that smoke-tests each binary and attaches the binaries and
-  `PrimeDF.hpppl` to tagged releases.
+- **Converter window**: a small, friendly tkinter app with a mascot. Drop PDFs
+  (or folders) into it, or click to choose files. It has a progress bar, a
+  "Sharper zoom" option and an "Open folder" button. On Windows, PDFs can also
+  be dropped onto the `.exe` icon.
+- Standalone executables on GitHub Releases, so you don't need Python. The
+  Windows build is the windowed `PrimeDF-windows-x64.exe` with the mascot
+  icon. Linux and macOS get command-line builds.
+- The CLI accepts folders, and opens the window when run without arguments.
+- Build workflow that smoke-tests each binary (including a real window run on
+  Windows) and attaches the binaries and `PrimeDF.hpppl` to tagged releases.
 
 ### Changed
 
-- The default output folder is now `primedf_out` next to each input PDF, not in
-  the current directory.
+- Rendering engine switched from PyMuPDF to PDFium (pypdfium2), and Pillow
+  replaced by a built-in PNG encoder. The executable shrinks from ~111 MB to
+  ~15 MB.
+- Pages of `My Book.pdf` now go to a `My Book` folder next to the PDF.
 - Python 3.10+ is required to run from source.
 
 ## [0.1.0] - 2026-11-25
