@@ -1,0 +1,22 @@
+#pragma mode( separator(.,;) integer(h32) )
+// Presence test p09-call-in-args: the boot screen plus ONE construct (a user function inside a built-in call).
+// If the app opens on the Function screen, this construct breaks it.
+PdBg()
+BEGIN
+  RETURN RGB(255,240,245);
+END;
+
+START()
+BEGIN
+  LOCAL k,n,s,i,lst;
+  n:=0; s:="";
+  RECT_P(G0,0,0,319,239,RGB(255,143,171),RGB(255,143,171));
+  TEXTOUT_P("IT BOOTS",G0,95,60,7,RGB(255,255,255));
+  TEXTOUT_P("p09-call-in-args",G0,30,110,3,RGB(62,50,72));
+  RECT_P(G0,0,225,10,235,PdBg(),PdBg());
+  TEXTOUT_P("ran ok",G0,130,140,3,RGB(62,50,72));
+  TEXTOUT_P("press Esc",G0,125,200,3,RGB(62,50,72));
+  REPEAT
+    k:=GETKEY;
+  UNTIL k==4;
+END;
