@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
-"""Lightweight static checks for HP PPL source files.
+"""Static checks for HP PPL source files.
 
 There is no PPL compiler outside the calculator/Connectivity Kit, so CI
 catches the mistakes that are easy to make when editing on a PC:
 
+Structure
 * unbalanced blocks (BEGIN/IF/WHILE/FOR/CASE/IFERR ... END, REPEAT ... UNTIL)
-* forward declarations without a matching definition (and vice versa)
-* a missing entry point (START() or Symb()) for an app program
+* a missing app entry point (START() or Symb())
+* a function defined twice
+
+Style rules learned from programs that are known to compile and run on
+the Prime (and from PrimeDF's first hardware test):
+* no LOCAL outside functions: declare program-wide variables as "name:=value;"
+* no forward declarations: define every function before it is called
+* "!=" for not-equal, never "<>"
+* no "ELSE IF" on one line: write ELSE, then a nested IF ... END
+* no LOCAL variables named like app variables F0-F9 (apps are based on Function)
 """
 
 from __future__ import annotations
@@ -16,14 +25,35 @@ import sys
 from pathlib import Path
 
 OPENERS = {"BEGIN", "IF", "WHILE", "FOR", "CASE", "IFERR"}
-TOKEN = re.compile(r'"(?:[^"\\]|\\.)*"|//[^\n]*|[A-Za-z_][A-Za-z0-9_]*|\n')
+TOKEN = re.compile(r'"(?:[^"\\]|\\.)*"|//[^\n]*|[A-Za-z_][A-Za-z0-9_]*|<>|\n')
 FUNC_HEAD = re.compile(r"^(?:EXPORT\s+)?([A-Za-z_][A-Za-z0-9_]*)\(([^)]*)\)\s*(;)?\s*$")
+CALL = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*\(")
+APP_VARS = re.compile(r"^[Ff][0-9]$")
+
+
+def _code(line: str) -> str:
+    """The line without its // comment and with string contents blanked."""
+    out, in_str = [], False
+    i = 0
+    while i < len(line):
+        ch = line[i]
+        if not in_str and line.startswith("//", i):
+            break
+        if ch == '"':
+            in_str = not in_str
+            out.append(ch)
+        else:
+            out.append(" " if in_str else ch)
+        i += 1
+    return "".join(out)
 
 
 def check(path: Path) -> list[str]:
     src = path.read_text(encoding="utf-8")
+    lines = src.splitlines()
     errors: list[str] = []
 
+    # ---- block balance and "<>" (token based, strings/comments skipped)
     stack: list[tuple[str, int]] = []
     line = 1
     for m in TOKEN.finditer(src):
@@ -33,7 +63,9 @@ def check(path: Path) -> list[str]:
             continue
         if tok.startswith(('"', "//")):
             continue
-        if tok in OPENERS or tok == "REPEAT":
+        if tok == "<>":
+            errors.append(f"{path}:{line}: use != instead of <>")
+        elif tok in OPENERS or tok == "REPEAT":
             stack.append((tok, line))
         elif tok == "END":
             if not stack or stack[-1][0] == "REPEAT":
@@ -48,30 +80,51 @@ def check(path: Path) -> list[str]:
     for tok, ln in stack:
         errors.append(f"{path}:{ln}: {tok} is never closed")
 
-    declared: dict[str, int] = {}
+    # ---- functions: definitions, forward declarations
     defined: dict[str, int] = {}
-    lines = src.splitlines()
     for i, raw in enumerate(lines, start=1):
         if raw[:1].isspace():  # declarations/definitions start at column 0
             continue
-        text = raw.split("//", 1)[0].strip()
+        text = _code(raw).strip()
         m = FUNC_HEAD.match(text)
-        if not m or m.group(1).upper() in OPENERS | {"END", "RETURN"}:
+        if not m or m.group(1).upper() in OPENERS | {"END", "RETURN", "LOCAL"}:
             continue
         name, is_decl = m.group(1), bool(m.group(3))
         if is_decl:
-            declared[name] = i
-        else:
-            nxt = next((ln.strip() for ln in lines[i:] if ln.strip()), "")
-            if nxt.split("//", 1)[0].strip() == "BEGIN":
-                if name in defined:
-                    errors.append(f"{path}:{i}: {name}() defined twice")
-                defined[name] = i
-    for name, ln in declared.items():
-        if name not in defined:
-            errors.append(f"{path}:{ln}: {name}() declared but never defined")
+            errors.append(f"{path}:{i}: forward declaration of {name}(); "
+                          "define functions before use instead")
+            continue
+        nxt = next((ln.strip() for ln in lines[i:] if ln.strip()), "")
+        if _code(nxt).strip() == "BEGIN":
+            if name in defined:
+                errors.append(f"{path}:{i}: {name}() defined twice")
+            defined[name] = i
     if not {"START", "Symb"} & defined.keys():
         errors.append(f"{path}: app program has no entry point (START() or Symb())")
+
+    # ---- per-line rules
+    for i, raw in enumerate(lines, start=1):
+        code = _code(raw)
+        stripped = code.strip()
+        if not stripped:
+            continue
+        if not raw[:1].isspace() and stripped.upper().startswith("LOCAL "):
+            errors.append(f"{path}:{i}: LOCAL outside a function; use 'name:=value;'")
+        if re.search(r"\bELSE\s+IF\b", code):
+            errors.append(f"{path}:{i}: ELSE IF on one line; use ELSE + nested IF ... END")
+        lm = re.match(r"\s*LOCAL\s+(.*?);?\s*$", code)
+        if lm:
+            for decl in lm.group(1).split(","):
+                var = decl.split(":=")[0].strip()
+                if APP_VARS.match(var):
+                    errors.append(f"{path}:{i}: LOCAL {var} clashes with app variable "
+                                  f"{var.upper()}")
+        if raw[:1].isspace():  # inside a function body: calls must be defined above
+            for cm in CALL.finditer(code):
+                callee = cm.group(1)
+                if callee in defined and defined[callee] > i:
+                    errors.append(f"{path}:{i}: {callee}() is used before it is defined "
+                                  f"(line {defined[callee]})")
     return errors
 
 

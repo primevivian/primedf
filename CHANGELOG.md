@@ -8,9 +8,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
-- Opening PrimeDF from the Apps library (tapping its icon) showed the Function
-  app's screens instead of the reader. The reader now replaces the app's
-  Symb/Plot/Num views, so every way into the app opens it. Found on hardware.
+- Opening PrimeDF showed the Function app's screens instead of the reader
+  (first hardware test). The most likely cause was the calculator rejecting the
+  program. The program now follows the conventions of PPL apps known to work
+  on the Prime: program-wide variables without `LOCAL`, no forward
+  declarations (functions defined before use), `!=` instead of `<>`, no
+  `ELSE IF`, and no locals named like the app variables F1/F2. The reader
+  also replaces the app's Symb/Plot/Num views, so every way into the app
+  opens it.
+- `tools/check_ppl.py` enforces these rules in CI.
 
 ## [0.2.0] - 2026-11-25
 
