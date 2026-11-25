@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Opening PrimeDF from the Apps library (tapping its icon) showed the Function
+  app's screens instead of the reader. The reader now replaces the app's
+  Symb/Plot/Num views, so every way into the app opens it. Found on hardware.
+
 ## [0.2.0] - 2026-11-25
 
 ### Added

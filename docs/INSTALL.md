@@ -110,9 +110,9 @@ alone.
 
 ## 5. Read
 
-Press <kbd>Apps</kbd> and open **PrimeDF**. If you land on the Function
-screens instead of the file menu, highlight PrimeDF and tap **Start**. That
-runs the app's `START()` entry point.
+Press <kbd>Apps</kbd> and open **PrimeDF**. You can tap its icon, press **Start**,
+or press <kbd>Symb</kbd>, <kbd>Plot</kbd> or <kbd>Num</kbd> inside the app: all of them open
+the document menu. Press <kbd>Esc</kbd> in the menu to go back to Home.
 
 ## Troubleshooting
 

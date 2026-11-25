@@ -50,6 +50,7 @@ Render();
 Busy(t);
 FreeAll();
 Viewer(d);
+Reader();
 
 // ---- small helpers ---------------------------------------------------
 // Integer -> string without depending on the user's number format.
@@ -352,24 +353,43 @@ BEGIN
   FreeAll();
 END;
 
-// ---- app entry point -------------------------------------------------
-START()
+// ---- the reader: file menu -> viewer, then back to Home -------------
+Reader()
 BEGIN
   LOCAL c:=1, i, items;
   pdBG:=RGB(40,40,40); pdFG:=RGB(255,255,255);
   ScanDocs();
   IF SIZE(pdNames)==0 THEN
-    MSGBOX("PrimeDF: no documents found. Convert a PDF with the PrimeDF converter and copy the .png pages into this app's files.");
-    RETURN;
+    MSGBOX("PrimeDF: no documents found. Convert a PDF with the PrimeDF converter and copy the .png pages into this app's Files.");
+  ELSE
+    items:={};
+    FOR i FROM 1 TO SIZE(pdNames) DO
+      items(i):=pdNames(i)+"   ("+IToS(pdCounts(i))+" pages)";
+    END;
+    WHILE 1 DO
+      IF CHOOSE(c,"PrimeDF - open a document",items)==0 THEN BREAK; END;
+      Viewer(c);
+    END;
+    FreeAll();
   END;
-  items:={};
-  FOR i FROM 1 TO SIZE(pdNames) DO
-    items(i):=pdNames(i)+"   ("+IToS(pdCounts(i))+" pages)";
-  END;
-  WHILE 1 DO
-    IF CHOOSE(c,"PrimeDF - open a document",items)==0 THEN BREAK; END;
-    Viewer(c);
-  END;
-  FreeAll();
-  STARTVIEW(-1,1);
+  STARTVIEW(-1,1);   // leave to Home so the app's own views never show
+END;
+
+// ---- app entry points --------------------------------------------------
+// Opening an app (tapping its icon) shows its last view, normally Symb,
+// and the Start soft key also ends up there. Replacing the views with
+// the reader means every way into PrimeDF opens the reader.
+Symb()
+BEGIN
+  Reader();
+END;
+
+Plot()
+BEGIN
+  Reader();
+END;
+
+Num()
+BEGIN
+  Reader();
 END;

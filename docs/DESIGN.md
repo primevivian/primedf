@@ -37,8 +37,13 @@ A document is a set of PNG files inside the PrimeDF app:
 
 Everything is in one PPL app program, [`calculator/PrimeDF.hpppl`](../calculator/PrimeDF.hpppl).
 
-- **`START()`**: builds the document list and shows it with the native `CHOOSE`
-  menu. Using the firmware's own menu is the lightest option, and it supports
+- **Entry points**: the app replaces its `Symb()`, `Plot()` and `Num()` views
+  with `Reader()`. Opening an app shows its last view, so every way into
+  PrimeDF (icon, Start soft key, view keys) lands in the reader. `START()` alone
+  isn't enough, because tapping the icon doesn't run it.
+- **`Reader()`**: builds the document list and shows it with the native `CHOOSE`
+  menu. On exit it goes to Home (`STARTVIEW(-1)`), so the app's own Function
+  views never appear. Using the firmware's own menu is the lightest option, and it supports
   touch and keys for free.
 - **`Viewer()`**: the reading loop.
 - **Page cache**: three GROB slots (`G1`–`G3`) with LRU eviction. While the app

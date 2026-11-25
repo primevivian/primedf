@@ -6,7 +6,7 @@ catches the mistakes that are easy to make when editing on a PC:
 
 * unbalanced blocks (BEGIN/IF/WHILE/FOR/CASE/IFERR ... END, REPEAT ... UNTIL)
 * forward declarations without a matching definition (and vice versa)
-* a missing START() entry point for an app program
+* a missing entry point (START() or Symb()) for an app program
 """
 
 from __future__ import annotations
@@ -70,8 +70,8 @@ def check(path: Path) -> list[str]:
     for name, ln in declared.items():
         if name not in defined:
             errors.append(f"{path}:{ln}: {name}() declared but never defined")
-    if "START" not in defined:
-        errors.append(f"{path}: app program has no START() entry point")
+    if not {"START", "Symb"} & defined.keys():
+        errors.append(f"{path}: app program has no entry point (START() or Symb())")
     return errors
 
 

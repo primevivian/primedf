@@ -74,8 +74,8 @@ Python.
 3. **Copy the documents:** drag the `.png` files from the converter's output
    folder onto the **Files** folder of the PrimeDF app in Connectivity Kit
    (*Application Library → PrimeDF → Files*).
-4. On the calculator, open **PrimeDF** from the Apps library. Choose **Start** if
-   the menu doesn't appear right away.
+4. On the calculator, open **PrimeDF** from the Apps library. The document menu
+   appears, and leaving it takes you back to Home.
 
 [`docs/INSTALL.md`](docs/INSTALL.md) has the step-by-step guide with
 troubleshooting.
