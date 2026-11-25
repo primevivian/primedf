@@ -99,6 +99,8 @@ converter/                 the PC converter (Python package, tests, exe packagin
 docs/INSTALL.md            detailed setup and troubleshooting
 docs/DESIGN.md             architecture, file format, performance notes
 docs/HPAPPDIR_FORMAT.md    reverse-engineered HP Prime app package format
+docs/HARDWARE_NOTES.md     what app programs really do on a G2 (tested findings)
+calculator/tests/          single-feature hardware test apps
 tools/                     PPL checker, .hpappdir inspector and builder
 calculator/app-template/   exported app the release package is built from
 ```

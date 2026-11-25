@@ -6,13 +6,15 @@
 //  Built up step by step, each step tested on real hardware.
 //  Step 2: file menu + open a page (fit to screen). Esc goes back.
 //
-//  Hardware lessons so far (tools/check_ppl.py enforces the style):
-//  - No program-wide variables. A program declaring them never got past
-//    the Function screen, while the boot test (none) started fine.
-//    State is passed between functions instead.
-//  - Every function name carries a "Pd" prefix so it cannot collide with
-//    a built-in command (e.g. DRAWMENU).
-//  - Functions defined before use, "!=" for not equal, no "ELSE IF".
+//  Hardware lessons (see docs/HARDWARE_NOTES.md for the full record):
+//  - List the app's files with "AFiles" (no parentheses). "AFiles()"
+//    compiles but fails at run time.
+//  - A run-time error inside START() silently leaves the user on the
+//    app's Function screen, so START() catches everything and shows an
+//    error screen.
+//  - Style (tools/check_ppl.py): functions defined before use, "!=" for
+//    not equal, no "ELSE IF", "Pd" prefix on function names, and state
+//    passed between functions rather than kept in program-wide variables.
 // =====================================================================
 
 // ---- colors ---------------------------------------------------------------
@@ -47,11 +49,20 @@ BEGIN
 END;
 
 // ---- text ---------------------------------------------------------------
-// Width in pixels of text t in font f (TEXTOUT_P returns the end x).
+// Width in pixels of text t in font f. TEXTOUT_P should return the end
+// x of the text; if that fails or looks wrong, estimate from the length.
 PdTextW(t,f)
 BEGIN
-  DIMGROB_P(G9,320,40);
-  RETURN TEXTOUT_P(t,G9,0,0,f,0);
+  LOCAL w;
+  IFERR
+    DIMGROB_P(G9,320,40);
+    w:=TEXTOUT_P(t,G9,0,0,f,0);
+    IF w<=0 OR w>320 THEN w:=-1; END;
+  THEN
+    w:=-1;
+  END;
+  IF w<0 THEN w:=DIM(t)*(4+1.5*f); END;
+  RETURN w;
 END;
 
 // Draw text t horizontally centered at height y.
@@ -68,7 +79,13 @@ PdListPng()
 BEGIN
   LOCAL fl,i,fn,n,out;
   out:={};
-  fl:=AFiles();
+  // The file list is the app variable AFiles, without parentheses.
+  // "AFiles()" compiles but fails at run time (hardware test 3).
+  IFERR
+    fl:=AFiles;
+  THEN
+    fl:={};
+  END;
   FOR i FROM 1 TO SIZE(fl) DO
     fn:=fl(i); n:=DIM(fn);
     IF n>4 THEN
@@ -169,7 +186,22 @@ BEGIN
 END;
 
 // ---- entry point (runs when the app is opened; confirmed on hardware) ---
+// A run-time error inside START silently drops the user on the Function
+// screen, so catch everything and say so on a PrimeDF screen instead.
 START()
 BEGIN
-  PdMenu();
+  LOCAL k;
+  IFERR
+    PdMenu();
+  THEN
+    RECT_P(G0,0,0,319,239,PdBg(),PdBg());
+    RECT_P(G0,0,0,319,27,PdAccent(),PdAccent());
+    PdCenter("PrimeDF",5,4,RGB(255,255,255));
+    PdCenter("Oops, PrimeDF hit an error",88,4,PdInk());
+    PdCenter("Please report what you were doing",118,2,PdMuted());
+    PdCenter("Esc: exit",222,2,PdInk());
+    REPEAT
+      k:=GETKEY;
+    UNTIL k==4;
+  END;
 END;

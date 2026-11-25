@@ -4,7 +4,7 @@ Boot(where)
 BEGIN
   LOCAL k,fl,i,fn,n,pngs,w;
   pngs:={};
-  fl:=AFiles();
+  fl:=AFiles();   // check_ppl: ignore (this test probes it)
   FOR i FROM 1 TO SIZE(fl) DO
     fn:=fl(i); n:=DIM(fn);
     IF n>4 THEN

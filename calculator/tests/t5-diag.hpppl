@@ -1,0 +1,52 @@
+#pragma mode( separator(.,;) integer(h32) )
+// Test 5: run each suspect from test 3 in its own IFERR and show a table.
+// Results are drawn without joining strings and numbers (itself a suspect).
+
+PdRow(label,ok,y)
+BEGIN
+  TEXTOUT_P(label,G0,10,y,2,RGB(62,50,72));
+  IF ok THEN
+    TEXTOUT_P("ok",G0,250,y,2,RGB(40,140,90));
+  ELSE
+    TEXTOUT_P("FAIL",G0,250,y,2,RGB(200,30,60));
+  END;
+END;
+
+START()
+BEGIN
+  LOCAL k,r1,r2,r3,r4,r5,r6,r7,r8,fl,n,s,w,lst;
+  r1:=1; r2:=1; r3:=1; r4:=1; r5:=1; r6:=1; r7:=1; r8:=1;
+
+  IFERR fl:=AFiles(); n:=SIZE(fl); THEN r1:=0; END;   // check_ppl: ignore
+  IFERR fl:=AFiles; n:=SIZE(fl); THEN r2:=0; END;
+  IFERR s:="n="+5; THEN r3:=0; END;
+  IFERR s:="n="+STRING(5); THEN r4:=0; END;
+  IFERR DIMGROB_P(G9,320,40); w:=TEXTOUT_P("IT BOOTS",G9,0,0,7,0); THEN r5:=0; END;
+  IFERR lst:={}; lst(1):="a"; lst(SIZE(lst)+1):="b"; THEN r6:=0; END;
+  IFERR n:=DIM("abc.png"); s:=RIGHT("abc.png",4); THEN r7:=0; END;
+  IFERR IF "a"!="b" THEN n:=1; END; THEN r8:=0; END;
+
+  RECT_P(G0,0,0,319,239,RGB(255,240,245),RGB(255,240,245));
+  RECT_P(G0,0,0,319,22,RGB(255,126,166),RGB(255,126,166));
+  TEXTOUT_P("test 5: diagnostics",G0,90,4,3,RGB(255,255,255));
+  PdRow("1  fl:=AFiles()  (empty parens)",r1,30);
+  PdRow("2  fl:=AFiles    (no parens)",r2,50);
+  PdRow("3  string + number",r3,70);
+  PdRow("4  string + STRING(number)",r4,90);
+  PdRow("5  TEXTOUT_P returns a width",r5,110);
+  PdRow("6  list append",r6,130);
+  PdRow("7  DIM / RIGHT on strings",r7,150);
+  PdRow("8  != on strings",r8,170);
+  IF r2 THEN
+    TEXTOUT_P("files via AFiles:",G0,10,195,2,RGB(142,130,153));
+    IFERR TEXTOUT_P(SIZE(AFiles),G0,130,195,2,RGB(142,130,153)); THEN n:=0; END;
+  END;
+  IF r5 THEN
+    TEXTOUT_P("text width:",G0,170,195,2,RGB(142,130,153));
+    IFERR TEXTOUT_P(w,G0,250,195,2,RGB(142,130,153)); THEN n:=0; END;
+  END;
+  TEXTOUT_P("press Esc",G0,130,220,2,RGB(62,50,72));
+  REPEAT
+    k:=GETKEY;
+  UNTIL k==4;
+END;
