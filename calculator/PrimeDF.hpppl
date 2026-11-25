@@ -6,138 +6,164 @@
 //  Built up step by step, each step tested on real hardware.
 //  Step 2: file menu + open a page (fit to screen). Esc goes back.
 //
-//  Style rules (enforced by tools/check_ppl.py): program-wide variables
-//  as plain "name:=value;", functions defined before use, "!=" for not
-//  equal, no "ELSE IF", no names that clash with app variables.
+//  Hardware lessons so far (tools/check_ppl.py enforces the style):
+//  - No program-wide variables. A program declaring them never got past
+//    the Function screen, while the boot test (none) started fine.
+//    State is passed between functions instead.
+//  - Every function name carries a "Pd" prefix so it cannot collide with
+//    a built-in command (e.g. DRAWMENU).
+//  - Functions defined before use, "!=" for not equal, no "ELSE IF".
 // =====================================================================
 
-// ---- program-wide state ----------------------------------------------
-pdFiles:={};
-pdBG:=0; pdAcc:=0; pdSel:=0; pdSoft:=0; pdInk:=0; pdMut:=0; pdWhite:=0;
-
-// ---- look ---------------------------------------------------------------
-Colors()
+// ---- colors ---------------------------------------------------------------
+PdBg()
 BEGIN
-  pdBG:=RGB(255,240,245);     // page background, blush
-  pdAcc:=RGB(255,126,166);    // header, accent pink
-  pdSel:=RGB(255,196,214);    // selected row
-  pdSoft:=RGB(255,222,232);   // footer
-  pdInk:=RGB(62,50,72);       // text
-  pdMut:=RGB(142,130,153);    // secondary text
-  pdWhite:=RGB(255,255,255);
+  RETURN RGB(255,240,245);    // page background, blush
 END;
 
+PdAccent()
+BEGIN
+  RETURN RGB(255,126,166);    // header, accent pink
+END;
+
+PdSelColor()
+BEGIN
+  RETURN RGB(255,196,214);    // selected row
+END;
+
+PdSoft()
+BEGIN
+  RETURN RGB(255,222,232);    // footer
+END;
+
+PdInk()
+BEGIN
+  RETURN RGB(62,50,72);       // text
+END;
+
+PdMuted()
+BEGIN
+  RETURN RGB(142,130,153);    // secondary text
+END;
+
+// ---- text ---------------------------------------------------------------
 // Width in pixels of text t in font f (TEXTOUT_P returns the end x).
-TextW(t,f)
+PdTextW(t,f)
 BEGIN
   DIMGROB_P(G9,320,40);
   RETURN TEXTOUT_P(t,G9,0,0,f,0);
 END;
 
 // Draw text t horizontally centered at height y.
-Center(t,y,f,c)
+PdCenter(t,y,f,c)
 BEGIN
-  LOCAL w:=TextW(t,f);
+  LOCAL w;
+  w:=PdTextW(t,f);
   TEXTOUT_P(t,G0,MAX(0,IP((320-w)/2)),y,f,c);
 END;
 
 // ---- files ---------------------------------------------------------------
 // All .png files in this app's Files, except the app icon.
-ListPng()
+PdListPng()
 BEGIN
-  LOCAL fl,i,fn,n;
-  pdFiles:={};
+  LOCAL fl,i,fn,n,out;
+  out:={};
   fl:=AFiles();
   FOR i FROM 1 TO SIZE(fl) DO
     fn:=fl(i); n:=DIM(fn);
     IF n>4 THEN
       IF RIGHT(fn,4)==".png" AND fn!="icon.png" THEN
-        pdFiles(SIZE(pdFiles)+1):=fn;
+        out(SIZE(out)+1):=fn;
       END;
     END;
   END;
+  RETURN out;
 END;
 
 // ---- screens ---------------------------------------------------------------
 // The file menu; sel = selected row, top = first visible row (8 rows).
-DrawMenu(sel,top)
+PdDrawList(files,sel,top)
 BEGIN
-  LOCAL i,y,nm,n:=SIZE(pdFiles);
-  RECT_P(G0,0,0,319,239,pdBG,pdBG);
-  RECT_P(G0,0,0,319,27,pdAcc,pdAcc);
-  Center("PrimeDF",5,4,pdWhite);
+  LOCAL i,y,nm,n;
+  n:=SIZE(files);
+  RECT_P(G0,0,0,319,239,PdBg(),PdBg());
+  RECT_P(G0,0,0,319,27,PdAccent(),PdAccent());
+  PdCenter("PrimeDF",5,4,RGB(255,255,255));
   IF n==0 THEN
-    Center("No pages yet",88,4,pdInk);
-    Center("Add .png files to this app's Files",118,2,pdMut);
-    Center("with HP Connectivity Kit",134,2,pdMut);
+    PdCenter("No pages yet",88,4,PdInk());
+    PdCenter("Add .png files to this app's Files",118,2,PdMuted());
+    PdCenter("with HP Connectivity Kit",134,2,PdMuted());
   ELSE
     FOR i FROM top TO MIN(n,top+7) DO
       y:=32+(i-top)*22;
-      IF i==sel THEN RECT_P(G0,6,y,313,y+20,pdSel,pdSel); END;
-      nm:=pdFiles(i);
-      TEXTOUT_P(LEFT(nm,DIM(nm)-4),G0,16,y+3,3,pdInk);
+      IF i==sel THEN RECT_P(G0,6,y,313,y+20,PdSelColor(),PdSelColor()); END;
+      nm:=files(i);
+      TEXTOUT_P(LEFT(nm,DIM(nm)-4),G0,16,y+3,3,PdInk());
     END;
   END;
-  RECT_P(G0,0,218,319,239,pdSoft,pdSoft);
+  RECT_P(G0,0,218,319,239,PdSoft(),PdSoft());
   IF n==0 THEN
-    Center("Esc: exit",222,2,pdInk);
+    PdCenter("Esc: exit",222,2,PdInk());
   ELSE
-    Center("Enter: open      Esc: exit",222,2,pdInk);
+    PdCenter("Enter: open      Esc: exit",222,2,PdInk());
   END;
 END;
 
 // Show one page scaled to fit the screen. Esc returns.
-ShowPage(fn)
+PdShowPage(fn)
 BEGIN
-  LOCAL w,h,s,dw,dh,x0,y0,k;
-  RECT_P(G0,0,0,319,239,pdBG,pdBG);
-  Center("Loading...",110,3,pdInk);
+  LOCAL w,h,s,dw,dh,x0,y0,k,ok;
+  RECT_P(G0,0,0,319,239,PdBg(),PdBg());
+  PdCenter("Loading...",110,3,PdInk());
+  ok:=1;
   IFERR
     G1:=AFiles(fn);
   THEN
-    RECT_P(G0,0,0,319,239,pdBG,pdBG);
-    Center("Could not open",88,4,pdInk);
-    Center(fn,118,3,pdMut);
-    Center("Esc: back",222,2,pdInk);
-    REPEAT k:=GETKEY; UNTIL k==4;
-    RETURN 0;
+    ok:=0;
   END;
-  w:=GROBW_P(G1); h:=GROBH_P(G1);
-  s:=MIN(320/w,240/h);
-  dw:=ROUND(w*s,0); dh:=ROUND(h*s,0);
-  x0:=IP((320-dw)/2); y0:=IP((240-dh)/2);
-  RECT_P(G0,0,0,319,239,pdAcc,pdAcc);
-  BLIT_P(G0,x0,y0,x0+dw,y0+dh,G1,0,0,w,h);
-  REPEAT k:=GETKEY; UNTIL k==4;
+  IF ok==0 THEN
+    RECT_P(G0,0,0,319,239,PdBg(),PdBg());
+    PdCenter("Could not open",88,4,PdInk());
+    PdCenter(fn,118,3,PdMuted());
+    PdCenter("Esc: back",222,2,PdInk());
+  ELSE
+    w:=GROBW_P(G1); h:=GROBH_P(G1);
+    s:=MIN(320/w,240/h);
+    dw:=ROUND(w*s,0); dh:=ROUND(h*s,0);
+    x0:=IP((320-dw)/2); y0:=IP((240-dh)/2);
+    RECT_P(G0,0,0,319,239,PdAccent(),PdAccent());
+    BLIT_P(G0,x0,y0,x0+dw,y0+dh,G1,0,0,w,h);
+  END;
+  REPEAT
+    k:=GETKEY;
+  UNTIL k==4;
   DIMGROB_P(G1,1,1);
-  RETURN 1;
 END;
 
 // Menu loop: up/down select, Enter opens, Esc leaves.
-Menu()
+PdMenu()
 BEGIN
-  LOCAL sel:=1, top:=1, k, n;
-  ListPng();
-  n:=SIZE(pdFiles);
-  DrawMenu(sel,top);
-  WHILE 1 DO
+  LOCAL files,sel,top,k,n,run;
+  files:=PdListPng();
+  n:=SIZE(files);
+  sel:=1; top:=1; run:=1;
+  PdDrawList(files,sel,top);
+  WHILE run DO
     k:=GETKEY;
-    IF k==4 THEN BREAK; END;
-    IF n>0 THEN
-      IF k==2 AND sel>1 THEN
-        sel:=sel-1;
-        IF sel<top THEN top:=sel; END;
-        DrawMenu(sel,top);
-      END;
-      IF k==12 AND sel<n THEN
-        sel:=sel+1;
-        IF sel>top+7 THEN top:=sel-7; END;
-        DrawMenu(sel,top);
-      END;
-      IF k==30 THEN
-        ShowPage(pdFiles(sel));
-        DrawMenu(sel,top);
-      END;
+    IF k==4 THEN run:=0; END;
+    IF n>0 AND k==2 AND sel>1 THEN
+      sel:=sel-1;
+      IF sel<top THEN top:=sel; END;
+      PdDrawList(files,sel,top);
+    END;
+    IF n>0 AND k==12 AND sel<n THEN
+      sel:=sel+1;
+      IF sel>top+7 THEN top:=sel-7; END;
+      PdDrawList(files,sel,top);
+    END;
+    IF n>0 AND k==30 THEN
+      PdShowPage(files(sel));
+      PdDrawList(files,sel,top);
     END;
   END;
 END;
@@ -145,6 +171,5 @@ END;
 // ---- entry point (runs when the app is opened; confirmed on hardware) ---
 START()
 BEGIN
-  Colors();
-  Menu();
+  PdMenu();
 END;

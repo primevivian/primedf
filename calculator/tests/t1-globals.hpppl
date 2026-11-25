@@ -1,5 +1,6 @@
 #pragma mode( separator(.,;) integer(h32) )
 // Test 1: program-wide variables declared outside functions.
+// check_ppl: allow-globals
 pdA:=5;
 pdB:={};
 pdC:=0; pdD:=0;

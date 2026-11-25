@@ -11,7 +11,10 @@ Structure
 
 Style rules learned from programs that are known to compile and run on
 the Prime (and from PrimeDF's first hardware test):
-* no LOCAL outside functions: declare program-wide variables as "name:=value;"
+* no program-wide variables at all (no LOCAL or "name:=value;" outside
+  functions): the first hardware tests never started with them. A file can
+  opt out with the marker comment "check_ppl: allow-globals" (used by the
+  hardware test that checks exactly this).
 * no forward declarations: define every function before it is called
 * "!=" for not-equal, never "<>"
 * no "ELSE IF" on one line: write ELSE, then a nested IF ... END
@@ -102,14 +105,16 @@ def check(path: Path) -> list[str]:
     if not {"START", "Symb"} & defined.keys():
         errors.append(f"{path}: app program has no entry point (START() or Symb())")
 
+    allow_globals = "check_ppl: allow-globals" in src
     # ---- per-line rules
     for i, raw in enumerate(lines, start=1):
         code = _code(raw)
         stripped = code.strip()
         if not stripped:
             continue
-        if not raw[:1].isspace() and stripped.upper().startswith("LOCAL "):
-            errors.append(f"{path}:{i}: LOCAL outside a function; use 'name:=value;'")
+        if not raw[:1].isspace() and not allow_globals and (
+                stripped.upper().startswith("LOCAL ") or re.match(r"[A-Za-z_]\w*\s*:=", stripped)):
+            errors.append(f"{path}:{i}: program-wide variable; pass state between functions instead")
         if re.search(r"\bELSE\s+IF\b", code):
             errors.append(f"{path}:{i}: ELSE IF on one line; use ELSE + nested IF ... END")
         lm = re.match(r"\s*LOCAL\s+(.*?);?\s*$", code)
