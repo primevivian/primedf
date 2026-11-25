@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.hpppl text eol=crlf
+*.png binary
+*.pdf binary
+*.hpprgm binary
+*.hpapp binary

@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+
+# Converter output and local test documents
+primedf_out/
+out/
+*.pdf
+!converter/tests/fixtures/*.pdf
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
