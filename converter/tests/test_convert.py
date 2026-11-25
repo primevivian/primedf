@@ -112,3 +112,37 @@ def test_cli_rejects_name_with_multiple_inputs(tmp_path):
     a = make_pdf(tmp_path / "a.pdf", pages=1)
     b = make_pdf(tmp_path / "b.pdf", pages=1)
     assert main([str(a), str(b), "-n", "X"]) == 2
+
+
+def test_cli_default_output_is_next_to_each_pdf(tmp_path):
+    (tmp_path / "one").mkdir()
+    (tmp_path / "two").mkdir()
+    a = make_pdf(tmp_path / "one" / "a.pdf", pages=1)
+    b = make_pdf(tmp_path / "two" / "b.pdf", pages=2)
+    assert main([str(a), str(b), "-q"]) == 0
+    assert [p.name for p in (tmp_path / "one" / "primedf_out").iterdir()] == ["a.001.png"]
+    assert sorted(p.name for p in (tmp_path / "two" / "primedf_out").iterdir()) == [
+        "b.001.png", "b.002.png",
+    ]
+
+
+def test_cli_without_args_uses_picker(tmp_path, monkeypatch):
+    import primedf.cli as cli
+
+    pdf = make_pdf(tmp_path / "picked.pdf", pages=1)
+    monkeypatch.setattr(cli, "pick_pdfs", lambda: [pdf])
+    assert main(["-q"]) == 0
+    assert (tmp_path / "primedf_out" / "picked.001.png").exists()
+
+
+def test_cli_without_args_and_no_picker_shows_help(monkeypatch, capsys):
+    import primedf.cli as cli
+
+    monkeypatch.setattr(cli, "pick_pdfs", lambda: [])
+    assert main([]) == 2
+    assert "usage: primedf" in capsys.readouterr().out
+
+
+def test_cli_help_exits_cleanly(capsys):
+    assert main(["--help"]) == 0
+    assert "PDF" in capsys.readouterr().out

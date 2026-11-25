@@ -7,7 +7,7 @@ screen or the keypad. It has a plain file menu, smooth panning, and zoom.
 It does nothing else.
 
 > [!NOTE]
-> **Status: 0.1.0, not yet verified on hardware.** The converter has an automated
+> **Status: 0.2.0, the calculator app is not yet verified on hardware.** The converter has an automated
 > test suite. The calculator program follows the documented PPL APIs, but nobody
 > has run it on a real G2 yet. Bug reports from real devices are very welcome.
 
@@ -52,21 +52,26 @@ the bottom-right corner after each change.
 
 ## Quick start
 
-**Requirements:** an HP Prime G2 (it should also run on a G1) on current firmware,
-[HP Connectivity Kit](https://www.hpcalc.org/connectivity/), and Python 3.10+.
+**Requirements:** an HP Prime G2 (it should also run on a G1) on current firmware
+and [HP Connectivity Kit](https://www.hpcalc.org/connectivity/). You don't need
+Python.
 
-```sh
-# 1. Convert your PDFs on the PC
-pip install ./converter
-primedf "My Book.pdf" lecture-notes.pdf -o out/
-```
-
+1. **Convert your PDFs:** download `primedf-windows-x64.exe` from the
+   [latest release](https://github.com/primevivian/primedf/releases/latest).
+   It's a single portable file with nothing to install. **Drag one or more PDFs
+   onto it**, or double-click it to choose files. The pages are written to a
+   `primedf_out` folder next to each PDF, and that folder opens when the
+   conversion finishes.
+   Linux and macOS binaries are on the same page. See
+   [converter/README.md](converter/README.md) for command-line options and for
+   running the converter from Python source.
 2. **Create the app once:** on the calculator, press <kbd>Apps</kbd>, highlight
    **Function**, tap **Save**, and name the copy `PrimeDF`.
 3. **Install the program:** in Connectivity Kit, open
    *Application Library → PrimeDF → Program*. Replace its contents with
-   [`calculator/PrimeDF.hpppl`](calculator/PrimeDF.hpppl) and save.
-4. **Copy the documents:** drag the `.png` files from `out/` onto the **PrimeDF**
+   [`calculator/PrimeDF.hpppl`](calculator/PrimeDF.hpppl) and save. The file is
+   also attached to each release.
+4. **Copy the documents:** drag the `.png` files from `primedf_out` onto the **PrimeDF**
    app in Connectivity Kit's calculator tree.
 5. On the calculator, open **PrimeDF** from the Apps library. Choose **Start** if
    the menu doesn't appear right away.
@@ -79,15 +84,16 @@ troubleshooting.
 - **Text too small at fit width?** That's normal on a 320×240 screen. Press
   <kbd>+</kbd> three times (≈ 2×) for comfortable reading. The zoom level stays
   the same when you turn pages.
-- **Want crisper zoom?** Convert with `-w 960`. Files get bigger and pages load
-  more slowly.
+- **Want crisper zoom?** Convert with `-w 960`, for example
+  `primedf-windows-x64.exe -w 960 book.pdf` in a terminal. Files get bigger and
+  pages load more slowly.
 - **Storage:** a typical text page is 30–80 KB at the default width.
 
 ## Repository layout
 
 ```
 calculator/PrimeDF.hpppl   the HP Prime app program (HP PPL)
-converter/                 the PC converter (Python package + tests)
+converter/                 the PC converter (Python package, tests, exe packaging)
 docs/INSTALL.md            detailed setup and troubleshooting
 docs/DESIGN.md             architecture, file format, performance notes
 ```

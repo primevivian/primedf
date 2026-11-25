@@ -1,0 +1,77 @@
+name: Build executables
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths-ignore: ["**.md", "docs/**", "calculator/**"]
+  pull_request:
+    paths: ["converter/**", ".github/workflows/build.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.asset }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            asset: primedf-windows-x64.exe
+            exe: primedf.exe
+          - os: ubuntu-latest
+            asset: primedf-linux-x64
+            exe: primedf
+          - os: macos-latest
+            asset: primedf-macos-arm64
+            exe: primedf
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install converter and PyInstaller
+        run: pip install ./converter pyinstaller
+      - name: Build single-file executable
+        run: >
+          pyinstaller --onefile --console --name primedf
+          --collect-all pymupdf
+          --distpath dist --workpath build --specpath build
+          converter/packaging/primedf_entry.py
+      - name: Smoke test
+        run: python converter/packaging/smoke_test.py "dist/${{ matrix.exe }}"
+      - name: Rename asset
+        run: mv "dist/${{ matrix.exe }}" "dist/${{ matrix.asset }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp calculator/PrimeDF.hpppl dist/
+          chmod +x dist/primedf-linux-x64 dist/primedf-macos-arm64
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "PrimeDF $GITHUB_REF_NAME" --generate-notes

@@ -3,30 +3,48 @@
 PrimeDF has two parts. The **converter** runs on your PC. The **PrimeDF app**
 runs on the calculator.
 
-## 1. Install the converter (PC)
+## 1. Get the converter (PC)
 
-You need Python 3.10 or newer.
+Download the file for your system from the
+[latest release](https://github.com/primevivian/primedf/releases/latest):
 
-```sh
-git clone https://github.com/primevivian/primedf.git
-cd primedf
-pip install ./converter
-primedf --version
-```
+| System | File |
+| --- | --- |
+| Windows 10/11 (64-bit) | `primedf-windows-x64.exe` |
+| Linux (x86-64) | `primedf-linux-x64` |
+| macOS (Apple silicon) | `primedf-macos-arm64` |
+
+It's a single portable file with nothing to install. Keep it anywhere, for
+example on your desktop.
+
+> [!NOTE]
+> Windows SmartScreen may warn about an unsigned download. Choose
+> *More info → Run anyway*. On macOS, right-click the file and choose **Open**
+> the first time. On Linux and macOS, run `chmod +x` on the file first.
+
+If you prefer Python (3.10+), you can install from source instead with
+`pip install ./converter`. The command is then called `primedf`.
 
 ## 2. Convert documents
 
+**Without a terminal:** drag one or more PDFs onto `primedf-windows-x64.exe`,
+or double-click it and choose the files. A window shows the progress. When it
+finishes, the output folder opens.
+
+**From a terminal:**
+
 ```sh
-primedf "Linear Algebra.pdf" -o out/
-# Linear Algebra.pdf: 212 pages -> out/Linear_Algebra.*.png (9120 KiB)
+primedf-windows-x64.exe "Linear Algebra.pdf"
+# Linear Algebra.pdf: 212 pages -> primedf_out\Linear_Algebra.*.png (9120 KiB)
 ```
 
-This creates one image per page: `Linear_Algebra.001.png`,
-`Linear_Algebra.002.png`, and so on. The part before the page number is the
-name that shows in the calculator menu. Use `-n` to pick a shorter one:
+Either way you get one image per page, in a `primedf_out` folder next to the
+PDF: `Linear_Algebra.001.png`, `Linear_Algebra.002.png`, and so on. The part
+before the page number is the name that shows in the calculator menu. In a
+terminal, `-n` picks a shorter name and `-o` picks a different folder:
 
 ```sh
-primedf "Linear Algebra.pdf" -n LinAlg -o out/
+primedf-windows-x64.exe "Linear Algebra.pdf" -n LinAlg -o D:\calc
 ```
 
 ## 3. Create the PrimeDF app (calculator, one time)
