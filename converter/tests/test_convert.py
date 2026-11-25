@@ -28,7 +28,8 @@ def make_pdf(path: Path, pages: int = 3, text_at=(200, 300)) -> Path:
 @pytest.mark.parametrize(
     "stem, expected",
     [
-        ("My Thesis v2.final", "My_Thesis_v2_final"),
+        ("My Thesis v2.final", "My_Thesis_v2_fin"),  # cut to 16 chars
+        ("Notes v2.1", "Notes_v2_1"),
         ("   ", "doc"),
         ("résumé", "r_sum"),
         ("a" * 40, "a" * 16),
