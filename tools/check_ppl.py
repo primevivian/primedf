@@ -12,8 +12,8 @@ Structure
 Proven on hardware (docs/HARDWARE_NOTES.md):
 * a function parameter named "i" is a syntax error: i is the imaginary unit
   (test 8, editor Check pointed at it). "e" is treated the same as a precaution.
-* more than 8 names in one LOCAL statement: the 9th was a syntax error
-  (step 2d, Check pointed at it; test 4 used "ok" as a 4th name and booted).
+* more than 8 names in one LOCAL statement is a syntax error (tests t9a-c:
+  the limit is per statement; use several LOCAL lines; parameters do not count).
 * "a!=b" is NOT a not-equal test in PPL. It parses as a! = b (factorial),
   compiles, passes the editor's Check, and crashes at run time on strings,
   silently and past IFERR. For not-equal use "<>", "≠" or NOT(a==b)

@@ -12,8 +12,12 @@ All notable changes to this project are documented here. The format follows
   The 0.2.0 program never got past the Function screens on hardware.
   - Step 1 (verified): a boot-test app (`calculator/tests/boot.hpppl`) proved
     that the package, the icon and `START()` work.
-  - Step 2: a pink file menu listing the app's PNG files (up/down, Enter,
-    Esc), and a page view that fits the page to the screen.
+  - Step 2 (menu opens on hardware, step 2e): a pink file menu listing the
+    app's PNG files (up/down, Enter, Esc), and a page view that fits the page
+    to the screen.
+  - Also found on hardware: at most **8 names per `LOCAL` statement** (a 9th
+    is a syntax error, and parameters don't count), and a parameter named
+    `i` is a syntax error.
   - Root cause found by single-feature hardware tests (`docs/HARDWARE_NOTES.md`):
     **`a != b` isn't not-equal in PPL.** It reads as `a! = b`, compiles,
     passes Check, and crashes at run time on strings, silently and past
