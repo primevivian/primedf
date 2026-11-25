@@ -97,12 +97,15 @@ END;
 | File list: `AFiles` **and** `AFiles()` both work | **Confirmed OK** | t6 keys 1, 9 |
 | `SIZE(AFiles)`, `SIZE({1,2,3})`, `fl(1)` | **Confirmed OK** | t6 keys 2, 3, 0 |
 | `DIMGROB_P(G9,w,h)` scratch graphic | **Confirmed OK** | t6 key 5 |
-| `TEXTOUT_P` returns a value (used as the text's end x to center text) | **Confirmed OK** (value to record) | t6 key 6 |
+| `TEXTOUT_P` returns a value (used as the text's end x to center text) | **Confirmed OK**. Centering with it works. | t6 key 6, t8 key 9 |
 | `DIM` and `RIGHT` on strings | **Confirmed OK** | t6 key 7 |
 | List element assignment `lst(1):=…`, `lst(2):=…` | **Confirmed OK** | t6 key 8 |
 | **`a != b`** | **BROKEN**: it's `a! = b` (§1) | t6 key 4 |
 | `<>`, `≠`, `NOT(a==b)` as not-equal | **Confirmed OK** | t7 keys 1–4 |
 | **A function parameter named `i`**, e.g. `PdPick(lst,i)` | **Syntax error** (Check points at the `i`). `i` is the imaginary unit. `LOCAL i` and `FOR i` passed Check (step 2). | t8 |
+| `FOR … FROM … TO … DO`, `WHILE var DO`, `<=`, `>=`, `OR`, `AND` chains | **Confirmed OK** | t8 |
+| User functions as arguments, e.g. `RECT_P(…,PdBg(),PdBg())` | **Confirmed OK** | t8 |
+| `LEFT`, `MIN`, `MAX`, `IP`; list parameter indexed in a function; apostrophe in a string; decimal literals; `IFERR` containing `IF` | **Confirmed OK** | t8 |
 | `MOUSE()`, `WAIT(-1)`, `ISKEYDOWN`, `TICKS`, `CHOOSE` | Unknown | |
 
 ## 5. Test log
@@ -120,7 +123,7 @@ END;
 | `t6-keys` | each suspect on its own number key | ✅ boots. Every key OK **except 4 (`!=`)**, which crashes. |
 | `t7-notequal` | `<>`, `≠`, `NOT(==)`, and what `!=` computes on numbers | ✅ all keys OK |
 | step 2d (menu) | step 2c with `==` only | ❌ Function screen. Its `IFERR` error screen didn't show either, so either the failure escapes `IFERR` or the error screen's own text helpers fail. |
-| `t8-menu-parts` | each construct step 2d uses that no passing test covered: `FOR`, `<=`/`>=`, user functions inside arguments, `LEFT`/`MIN`/`MAX`/`IP`, a list parameter, `WHILE` + `AND` chain, an apostrophe in a string, and step 2d's exact text helpers | ❌ didn't boot: Check reported a **syntax error** at the parameter `i` in `PdPick(lst,i)`. Renamed, and re-testing. |
+| `t8-menu-parts` | each construct step 2d uses that no passing test covered: `FOR`, `<=`/`>=`, user functions inside arguments, `LEFT`/`MIN`/`MAX`/`IP`, a list parameter, `WHILE` + `AND` chain, an apostrophe in a string, and step 2d's exact text helpers | ❌ first version: Check reported a **syntax error** at the parameter `i` in `PdPick(lst,i)`. ✅ after renaming it: every key OK, the pink box was drawn, and the text was centered. |
 
 ## 6. How to run a hardware test
 
