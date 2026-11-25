@@ -7,13 +7,14 @@
 //  Step 2: file menu + open a page (fit to screen). Esc goes back.
 //
 //  Hardware lessons (see docs/HARDWARE_NOTES.md for the full record):
-//  - List the app's files with "AFiles" (no parentheses). "AFiles()"
-//    compiles but fails at run time.
-//  - A run-time error inside START() silently leaves the user on the
-//    app's Function screen, so START() catches everything and shows an
-//    error screen.
+//  - If the app opens on the Function screen, run Check in the program
+//    editor first: a syntax error is shown with the cursor right on it.
+//  - Reserved names: a parameter named "i" and a variable named "ok"
+//    are syntax errors.
 //  - "a!=b" is NOT a not-equal test in PPL: it parses as a! = b and
-//    crashes on strings, silently and past IFERR. Compare with "==" only.
+//    crashes on strings, silently and past IFERR. Use "<>" or "==".
+//  - A run-time error inside START() silently leaves the user on the
+//    app's Function screen, so START() catches errors and shows a screen.
 //  - Style (tools/check_ppl.py): functions defined before use, no
 //    "ELSE IF", "Pd" prefix on function names, and state passed between
 //    functions rather than kept in program-wide variables.
@@ -81,8 +82,7 @@ PdListPng()
 BEGIN
   LOCAL fl,i,fn,n,out;
   out:={};
-  // The file list is the app variable AFiles, without parentheses.
-  // "AFiles()" compiles but fails at run time (hardware test 3).
+  // The app's file list (AFiles and AFiles() both work, test 6).
   IFERR
     fl:=AFiles;
   THEN
@@ -137,16 +137,16 @@ END;
 // Show one page scaled to fit the screen. Esc returns.
 PdShowPage(fn)
 BEGIN
-  LOCAL w,h,s,dw,dh,x0,y0,k,ok;
+  LOCAL w,h,s,dw,dh,x0,y0,k,loaded;
   RECT_P(G0,0,0,319,239,PdBg(),PdBg());
   PdCenter("Loading...",110,3,PdInk());
-  ok:=1;
+  loaded:=1;
   IFERR
     G1:=AFiles(fn);
   THEN
-    ok:=0;
+    loaded:=0;
   END;
-  IF ok==0 THEN
+  IF loaded==0 THEN
     RECT_P(G0,0,0,319,239,PdBg(),PdBg());
     PdCenter("Could not open",88,4,PdInk());
     PdCenter(fn,118,3,PdMuted());
@@ -168,14 +168,14 @@ END;
 // Menu loop: up/down select, Enter opens, Esc leaves.
 PdMenu()
 BEGIN
-  LOCAL files,sel,top,k,n,run;
+  LOCAL files,sel,top,k,n,going;
   files:=PdListPng();
   n:=SIZE(files);
-  sel:=1; top:=1; run:=1;
+  sel:=1; top:=1; going:=1;
   PdDrawList(files,sel,top);
-  WHILE run DO
+  WHILE going DO
     k:=GETKEY;
-    IF k==4 THEN run:=0; END;
+    IF k==4 THEN going:=0; END;
     IF n>0 AND k==2 AND sel>1 THEN
       sel:=sel-1;
       IF sel<top THEN top:=sel; END;
