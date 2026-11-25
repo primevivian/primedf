@@ -88,11 +88,25 @@ That's it. The app comes with the program and its pink calculator icon.
 
 ## 4. Copy page images
 
-Drag the `.png` files from your output folder onto the **PrimeDF** entry under
-*Application Library* in Connectivity Kit. They're stored as the app's files.
+In Connectivity Kit's *Calculators* pane, expand your calculator, then
+**Application Library → PrimeDF**. The app has two folders, **Files** and
+**Variables**. Select all the `.png` files in the converter's output folder and
+drag them onto **Files**.
 
-To remove a document, delete its `.png` files from the app's files in
-Connectivity Kit.
+```
+HP Prime
+└── Application Library
+    └── PrimeDF
+        ├── Files        ← page images go here (icon.png is here too)
+        └── Variables    (not needed)
+```
+
+The app's files are a flat list with no subfolders. That's fine, because PrimeDF
+groups pages by document name: `My_Book.001.png … My_Book.240.png` appear as
+one menu entry, "My_Book (240 pages)".
+
+To remove a document, delete its `.png` files from **Files**. Leave `icon.png`
+alone.
 
 ## 5. Read
 

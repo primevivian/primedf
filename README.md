@@ -72,7 +72,8 @@ Python.
    **Application Library** in Connectivity Kit. It arrives with the program and
    its icon.
 3. **Copy the documents:** drag the `.png` files from the converter's output
-   folder onto the **PrimeDF** app in Connectivity Kit's calculator tree.
+   folder onto the **Files** folder of the PrimeDF app in Connectivity Kit
+   (*Application Library → PrimeDF → Files*).
 4. On the calculator, open **PrimeDF** from the Apps library. Choose **Start** if
    the menu doesn't appear right away.
 
