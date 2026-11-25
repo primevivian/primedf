@@ -37,9 +37,8 @@ inequality. It is read as `a!` (factorial) followed by `= b`:
 
 That one operator caused every failed test: the withdrawn 0.2.0 reader, steps
 2/2b/2c of the rebuild, and tests 3 and 5. It's easy to write, because `!=`
-means not-equal in most other languages. Test 7 checks what `!=` actually
-computes on numbers, and which real not-equal spellings work. Until that's
-known, PrimeDF compares with `==` only:
+means not-equal in most other languages. **Use `<>`, `≠` or `NOT(a==b)` instead**: all three are verified (test 7).
+PrimeDF's menu code compares with `==` only:
 
 ```
 IF fn=="icon.png" THEN
@@ -49,8 +48,7 @@ ELSE
 END;
 ```
 
-[`tools/check_ppl.py`](../tools/check_ppl.py) rejects `!=`. It also rejects
-`<>` and `≠` until test 7 verifies them.
+[`tools/check_ppl.py`](../tools/check_ppl.py) rejects `!=`.
 
 ## 2. Silent failures: how to debug app programs
 
@@ -101,7 +99,7 @@ END;
 | `DIM` and `RIGHT` on strings | **Confirmed OK** | t6 key 7 |
 | List element assignment `lst(1):=…`, `lst(2):=…` | **Confirmed OK** | t6 key 8 |
 | **`a != b`** | **BROKEN**: it's `a! = b` (§1) | t6 key 4 |
-| `<>`, `≠`, `NOT(a==b)` as not-equal | Unknown | t7 |
+| `<>`, `≠`, `NOT(a==b)` as not-equal | **Confirmed OK** | t7 keys 1–4 |
 | `MOUSE()`, `WAIT(-1)`, `ISKEYDOWN`, `TICKS`, `CHOOSE` | Unknown | |
 
 ## 5. Test log
@@ -117,8 +115,9 @@ END;
 | step 2 / 2b / 2c (menu) | the file menu; all used `fn!="icon.png"` | ❌ Function screen, though Check reported no errors |
 | `t5-diag` | each t3 suspect in its own `IFERR`, results table | ❌ (the `!=`, past `IFERR`) |
 | `t6-keys` | each suspect on its own number key | ✅ boots. Every key OK **except 4 (`!=`)**, which crashes. |
-| `t7-notequal` | `<>`, `≠`, `NOT(==)`, and what `!=` computes on numbers | pending |
-| step 2d (menu) | step 2c with `==` only | pending |
+| `t7-notequal` | `<>`, `≠`, `NOT(==)`, and what `!=` computes on numbers | ✅ all keys OK |
+| step 2d (menu) | step 2c with `==` only | ❌ Function screen. Its `IFERR` error screen didn't show either, so either the failure escapes `IFERR` or the error screen's own text helpers fail. |
+| `t8-menu-parts` | each construct step 2d uses that no passing test covered: `FOR`, `<=`/`>=`, user functions inside arguments, `LEFT`/`MIN`/`MAX`/`IP`, a list parameter, `WHILE` + `AND` chain, an apostrophe in a string, and step 2d's exact text helpers | pending |
 
 ## 6. How to run a hardware test
 

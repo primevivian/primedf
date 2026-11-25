@@ -12,10 +12,10 @@ Structure
 Proven on hardware (docs/HARDWARE_NOTES.md):
 * "a!=b" is NOT a not-equal test in PPL. It parses as a! = b (factorial),
   compiles, passes the editor's Check, and crashes at run time on strings,
-  silently and past IFERR. Compare with "==" only.
+  silently and past IFERR. For not-equal use "<>", "≠" or NOT(a==b)
+  (all verified, test 7).
 
 Precautions (not proven either way yet):
-* no "<>" or "≠" until one is verified on hardware; use == with IF/ELSE
 * no forward declarations: define every function before it is called
 * no "ELSE IF" on one line: write ELSE, then a nested IF ... END
 * no LOCAL variables named like app variables F0-F9 (apps are based on Function)
@@ -111,11 +111,7 @@ def check(path: Path) -> list[str]:
             continue
         if "!=" in code:
             errors.append(f"{path}:{i}: != is not not-equal in PPL (it reads as a! = b); "
-                          "compare with == and use IF/ELSE")
-        for op in ("<>", "≠"):
-            if op in code:
-                errors.append(f"{path}:{i}: {op} is not verified on hardware yet; "
-                              "compare with == and use IF/ELSE")
+                          "use <> instead")
         if re.search(r"\bELSE\s+IF\b", code):
             errors.append(f"{path}:{i}: ELSE IF on one line; use ELSE + nested IF ... END")
         lm = re.match(r"\s*LOCAL\s+(.*?);?\s*$", code)

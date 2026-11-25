@@ -1,0 +1,143 @@
+#pragma mode( separator(.,;) integer(h32) )
+// Test 8: every construct step 2d uses that no passing test has covered.
+// One per number key. A key that drops you to the Function screen is the
+// culprit (reopen the app and go on with the next key).
+
+PdLine(t,y)
+BEGIN
+  RECT_P(G0,0,y,319,y+17,RGB(255,240,245),RGB(255,240,245));
+  TEXTOUT_P(t,G0,10,y+2,2,RGB(62,50,72));
+END;
+
+PdBg()
+BEGIN
+  RETURN RGB(255,240,245);
+END;
+
+PdPick(lst,i)
+BEGIN
+  RETURN lst(i);
+END;
+
+// exact copies of the step 2d text helpers
+PdTextW(t,f)
+BEGIN
+  LOCAL w;
+  IFERR
+    DIMGROB_P(G9,320,40);
+    w:=TEXTOUT_P(t,G9,0,0,f,0);
+    IF w<=0 OR w>320 THEN w:=-1; END;
+  THEN
+    w:=-1;
+  END;
+  IF w<0 THEN w:=DIM(t)*(4+1.5*f); END;
+  RETURN w;
+END;
+
+PdCenter(t,y,f,c)
+BEGIN
+  LOCAL w;
+  w:=PdTextW(t,f);
+  TEXTOUT_P(t,G0,MAX(0,IP((320-w)/2)),y,f,c);
+END;
+
+// 1: FOR loop
+PdT1()
+BEGIN
+  LOCAL i,n;
+  n:=0;
+  FOR i FROM 1 TO 4 DO n:=n+i; END;
+  PdLine("1 FOR loop: ok, "+n+" (want 10)",150);
+END;
+
+// 2: <= and >=
+PdT2()
+BEGIN
+  LOCAL n;
+  n:=0;
+  IF 1<=2 THEN n:=n+1; END;
+  IF 3>=2 THEN n:=n+1; END;
+  PdLine("2 <= and >=: ok, "+n+" (want 2)",150);
+END;
+
+// 3: user functions as arguments of a built-in
+PdT3()
+BEGIN
+  RECT_P(G0,200,150,230,167,PdBg(),RGB(255,126,166));
+  PdLine("3 call in args: ok (pink box drawn?)",170);
+END;
+
+// 4: LEFT, MIN, MAX, IP
+PdT4()
+BEGIN
+  LOCAL s,n;
+  s:=LEFT("thesis.png",6);
+  n:=MIN(3,7)+MAX(3,7)+IP(2.7);
+  PdLine("4 LEFT/MIN/MAX/IP: ok, "+s+" "+n+" (want thesis 12)",150);
+END;
+
+// 5: list passed into a function and indexed there
+PdT5()
+BEGIN
+  LOCAL s;
+  s:=PdPick({"a","b","c"},2);
+  PdLine("5 list param: ok, "+s+" (want b)",150);
+END;
+
+// 6: WHILE with a variable condition and an AND chain
+PdT6()
+BEGIN
+  LOCAL run,n,k;
+  run:=1; n:=0; k:=2;
+  WHILE run DO
+    n:=n+1;
+    IF n>0 AND k==2 AND n>2 THEN run:=0; END;
+  END;
+  PdLine("6 WHILE + AND chain: ok, "+n+" (want 3)",150);
+END;
+
+// 7: apostrophe inside a string
+PdT7()
+BEGIN
+  PdLine("7 this app's Files: ok",150);
+END;
+
+// 8: the step 2d text width helper
+PdT8()
+BEGIN
+  LOCAL w;
+  w:=PdTextW("IT BOOTS",7);
+  PdLine("8 PdTextW: ok, width "+w,150);
+END;
+
+// 9: the step 2d centering helper
+PdT9()
+BEGIN
+  PdCenter("centered",190,3,RGB(255,126,166));
+  PdLine("9 PdCenter: ok (pink word centered?)",150);
+END;
+
+START()
+BEGIN
+  LOCAL k;
+  RECT_P(G0,0,0,319,239,RGB(255,240,245),RGB(255,240,245));
+  RECT_P(G0,0,0,319,27,RGB(255,126,166),RGB(255,126,166));
+  TEXTOUT_P("IT BOOTS  -  test 8",G0,80,5,4,RGB(255,255,255));
+  TEXTOUT_P("Press 1 2 3 4 5 6 7 8 9 to run a test.",G0,10,40,2,RGB(62,50,72));
+  TEXTOUT_P("If the Function screen appears, that test",G0,10,60,2,RGB(142,130,153));
+  TEXTOUT_P("failed: reopen PrimeDF and try the next.",G0,10,76,2,RGB(142,130,153));
+  TEXTOUT_P("Results:",G0,10,130,2,RGB(62,50,72));
+  TEXTOUT_P("Esc: exit",G0,130,220,2,RGB(62,50,72));
+  REPEAT
+    k:=GETKEY;
+    IF k==42 THEN PdT1(); END;
+    IF k==43 THEN PdT2(); END;
+    IF k==44 THEN PdT3(); END;
+    IF k==37 THEN PdT4(); END;
+    IF k==38 THEN PdT5(); END;
+    IF k==39 THEN PdT6(); END;
+    IF k==32 THEN PdT7(); END;
+    IF k==33 THEN PdT8(); END;
+    IF k==34 THEN PdT9(); END;
+  UNTIL k==4;
+END;
