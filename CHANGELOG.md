@@ -10,12 +10,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- **Converter window**: a small, friendly tkinter app with a mascot. Drop PDFs
+- **Converter window**: a small, friendly tkinter app. Drop PDFs
   (or folders) into it, or click to choose files. It has a progress bar, a
   "Sharper zoom" option and an "Open folder" button. On Windows, PDFs can also
   be dropped onto the `.exe` icon.
 - Standalone executables on GitHub Releases, so you don't need Python. The
-  Windows build is the windowed `PrimeDF-windows-x64.exe` with the mascot
+  Windows build is the windowed `PrimeDF-windows-x64.exe` with an HP Prime-style
   icon. Linux and macOS get command-line builds.
 - The CLI accepts folders, and opens the window when run without arguments.
 - Build workflow that smoke-tests each binary (including a real window run on

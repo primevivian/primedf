@@ -1,7 +1,8 @@
-"""The PrimeDF mascot: a tiny smiling calculator, drawn procedurally.
+"""The PrimeDF icon: an HP Prime G2-style calculator showing a PDF page.
 
 Used for the window icon and, through ``packaging/make_icon.py``, for the
 Windows .exe icon. Drawing it in code keeps binary assets out of the repo.
+It's a generic likeness of the device and carries no logos or trademarks.
 """
 
 from __future__ import annotations
@@ -10,50 +11,87 @@ from .png import PNG_RGBA, encode_png
 
 Color = tuple[int, int, int]
 
-PINK: Color = (255, 143, 171)
-PINK_RIM: Color = (232, 96, 140)
-SCREEN: Color = (255, 246, 236)
-INK: Color = (62, 50, 72)
-BLUSH: Color = (255, 190, 206)
-KEY: Color = (255, 255, 255)
-KEY_ACCENT: Color = (178, 160, 255)
+BODY: Color = (38, 40, 45)
+RIM: Color = (150, 156, 166)
+BEZEL: Color = (12, 12, 14)
+SCREEN_BAR: Color = (52, 84, 150)
+SCREEN_BG: Color = (214, 224, 238)
+PAGE: Color = (255, 255, 255)
+PAGE_TEXT: Color = (150, 156, 170)
+PAGE_TITLE: Color = (255, 126, 166)  # the converter's accent color
+DPAD: Color = (196, 200, 208)
+DPAD_CENTER: Color = (120, 124, 134)
+KEY_DARK: Color = (74, 77, 84)
+KEY_LIGHT: Color = (226, 228, 233)
+KEY_BLUE: Color = (70, 130, 220)
+KEY_ORANGE: Color = (240, 150, 60)
+
+_KEY_W, _KEY_H, _KEY_R = 0.075, 0.045, 0.008
+_KEY_COLS = [0.2765 + i * 0.093 for i in range(5)]
+_KEY_ROWS = [0.635 + j * 0.062 for j in range(5)]
 
 
 def _in_rrect(u: float, v: float, x0: float, y0: float, x1: float, y1: float,
-              r: float) -> bool:
+              r: float = 0.0) -> bool:
     if u < x0 or u > x1 or v < y0 or v > y1:
         return False
+    if r <= 0:
+        return True
     cx = min(max(u, x0 + r), x1 - r)
     cy = min(max(v, y0 + r), y1 - r)
     return (u - cx) ** 2 + (v - cy) ** 2 <= r * r
 
 
+def _screen(u: float, v: float) -> Color:
+    if v < 0.13:
+        return SCREEN_BAR  # the Prime's title bar
+    if 0.33 <= u <= 0.67 and 0.15 <= v <= 0.39:  # a document page
+        if 0.37 <= u <= 0.55 and 0.18 <= v <= 0.205:
+            return PAGE_TITLE
+        for i, ly in enumerate((0.235, 0.27, 0.305, 0.34)):
+            if 0.37 <= u <= (0.57 if i == 3 else 0.63) and ly <= v <= ly + 0.015:
+                return PAGE_TEXT
+        return PAGE
+    return SCREEN_BG
+
+
 def _color_at(u: float, v: float) -> Color | None:
-    """Color of the mascot at normalized coordinates (0..1), None = clear."""
-    if not _in_rrect(u, v, 0.16, 0.05, 0.84, 0.95, 0.14):
+    """Color of the icon at normalized coordinates (0..1), None = clear."""
+    if not _in_rrect(u, v, 0.22, 0.03, 0.78, 0.97, 0.04):
         return None
-    if _in_rrect(u, v, 0.25, 0.13, 0.75, 0.43, 0.06):  # screen with a face
-        for ex in (0.40, 0.60):
-            if (u - ex) ** 2 + (v - 0.25) ** 2 <= 0.036**2:
-                return INK
-        d = ((u - 0.5) ** 2 + (v - 0.27) ** 2) ** 0.5
-        if 0.066 <= d <= 0.094 and v > 0.305:
-            return INK
-        for bx in (0.32, 0.68):
-            if ((u - bx) / 0.04) ** 2 + ((v - 0.335) / 0.022) ** 2 <= 1:
-                return BLUSH
-        return SCREEN
-    for i, kx in enumerate((0.335, 0.5, 0.665)):
-        for j, ky in enumerate((0.56, 0.69, 0.82)):
-            if (u - kx) ** 2 + (v - ky) ** 2 <= 0.05**2:
-                return KEY_ACCENT if (i, j) == (2, 2) else KEY
-    if not _in_rrect(u, v, 0.185, 0.075, 0.815, 0.925, 0.115):
-        return PINK_RIM
-    return PINK
+    if not _in_rrect(u, v, 0.235, 0.045, 0.765, 0.955, 0.03):
+        return RIM
+    if v < 0.45:  # display
+        if _in_rrect(u, v, 0.285, 0.095, 0.715, 0.405, 0.006):
+            return _screen(u, v)
+        if _in_rrect(u, v, 0.27, 0.08, 0.73, 0.42, 0.012):
+            return BEZEL
+        return BODY
+    if v < 0.61:  # navigation: round d-pad between two pairs of menu keys
+        d2 = (u - 0.5) ** 2 + (v - 0.53) ** 2
+        if d2 <= 0.058**2:
+            return DPAD_CENTER if d2 <= 0.022**2 else DPAD
+        for x0, x1 in ((0.27, 0.39), (0.61, 0.73)):
+            for y0 in (0.475, 0.545):
+                if _in_rrect(u, v, x0, y0, x1, y0 + 0.04, _KEY_R):
+                    return KEY_DARK
+        return BODY
+    for j, ky in enumerate(_KEY_ROWS):  # keypad, 5 x 5
+        if ky <= v <= ky + _KEY_H:
+            for i, kx in enumerate(_KEY_COLS):
+                if _in_rrect(u, v, kx, ky, kx + _KEY_W, ky + _KEY_H, _KEY_R):
+                    if (i, j) == (0, 0):
+                        return KEY_BLUE
+                    if (i, j) == (1, 0):
+                        return KEY_ORANGE
+                    if j >= 2 and 1 <= i <= 3:
+                        return KEY_LIGHT  # number keys
+                    return KEY_DARK
+    return BODY
 
 
 def icon_rows(size: int, supersample: int = 4) -> list[bytes]:
-    """RGBA rows of the mascot at ``size`` x ``size``, anti-aliased."""
+    """RGBA rows of the icon at ``size`` x ``size``, anti-aliased."""
     ss = supersample
     n = ss * ss
     rows = []

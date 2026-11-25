@@ -196,7 +196,7 @@ class ConverterApp:
                               cursor="hand2")
         self.zone.pack(padx=pad, pady=(S(10), S(10)))
         m = S(3)
-        self.zone_box = _rrect(self.zone, m, m, W - m, zh - m, S(20), fill=CARD,
+        self.zone_box = _rrect(self.zone, m, m, W - m, zh - m, S(6), fill=CARD,
                                outline=ACCENT, width=S(2), dash=(6, 4))
         self.zone_title = self.zone.create_text(W / 2, zh / 2 - S(12), text="Drop PDFs here",
                                                 font=f_big, fill=INK)
@@ -207,12 +207,13 @@ class ConverterApp:
         self.zone.bind("<Leave>", lambda e: self._hover(False))
         self.zone.bind("<Button-1>", lambda e: self.choose())
 
-        # progress pill
-        bh = self.bar_h = S(12)
+        # progress bar
+        bh = self.bar_h = S(10)
         self.bar = tk.Canvas(root, width=W, height=bh, bg=BG, highlightthickness=0)
         self.bar.pack(padx=pad)
-        _rrect(self.bar, 0, 0, W, bh, bh / 2, fill=TRACK, outline="")
-        self.bar_fill = _rrect(self.bar, 0, 0, bh, bh, bh / 2, fill=ACCENT, outline="",
+        self.bar_r = S(3)
+        _rrect(self.bar, 0, 0, W, bh, self.bar_r, fill=TRACK, outline="")
+        self.bar_fill = _rrect(self.bar, 0, 0, bh, bh, self.bar_r, fill=ACCENT, outline="",
                                state="hidden")
 
         self.status = tk.Label(root, text="Ready when you are!", font=f_body, fg=INK, bg=BG,
@@ -261,8 +262,8 @@ class ConverterApp:
             self.bar.itemconfigure(self.bar_fill, state="hidden")
             return
         h = self.bar_h
-        x1 = max(float(h), self.W * min(1.0, frac))
-        self.bar.coords(self.bar_fill, *_rrect_points(0, 0, x1, h, h / 2))
+        x1 = max(2.0 * self.bar_r, self.W * min(1.0, frac))
+        self.bar.coords(self.bar_fill, *_rrect_points(0, 0, x1, h, self.bar_r))
         self.bar.itemconfigure(self.bar_fill, state="normal")
 
     def _set_open_enabled(self, on: bool) -> None:
@@ -365,7 +366,9 @@ class ConverterApp:
             self._set_status("Couldn't convert: " + "; ".join(errors), BAD)
         if self.selftest:
             self.exit_code = 0 if ok and not errors else 1
-            self.root.after(200, self.root.destroy)
+            # CI keeps the window up a little longer to take a screenshot
+            linger = int(os.environ.get("PRIMEDF_SELFTEST_LINGER_MS", "200"))
+            self.root.after(linger, self.root.destroy)
 
 
 def run_gui(files: Sequence[str | Path] = (), selftest: bool = False) -> int:

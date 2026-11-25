@@ -1,6 +1,6 @@
-"""Write the PrimeDF mascot as a multi-size Windows .ico (PNG-compressed).
+"""Write the PrimeDF icon as a multi-size Windows .ico (PNG-compressed).
 
-Usage: python make_icon.py OUT.ico
+Usage: python make_icon.py OUT.ico [PREVIEW.png]
 """
 
 import struct
@@ -25,6 +25,10 @@ def main() -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(header + entries + b"".join(images))
     print(f"wrote {out} ({out.stat().st_size} bytes)")
+    if len(sys.argv) > 2:  # optional large preview for humans
+        preview = Path(sys.argv[2])
+        preview.parent.mkdir(parents=True, exist_ok=True)
+        preview.write_bytes(images[-1])
     return 0
 
 
