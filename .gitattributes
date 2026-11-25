@@ -4,3 +4,5 @@
 *.pdf binary
 *.hpprgm binary
 *.hpapp binary
+*.hpappprgm binary
+*.hpappnote binary

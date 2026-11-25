@@ -81,9 +81,9 @@ def _color_at(u: float, v: float) -> Color | None:
         if ky <= v <= ky + _KEY_H:
             for i, kx in enumerate(_KEY_COLS):
                 if _in_rrect(u, v, kx, ky, kx + _KEY_W, ky + _KEY_H, _KEY_R):
-                    if (i, j) == (0, 0):
+                    if (i, j) == (0, 3):  # Shift: left column, 2nd row from bottom
                         return KEY_BLUE
-                    if (i, j) == (1, 0):
+                    if (i, j) == (0, 2):  # Alpha: left column, 3rd row from bottom
                         return KEY_ORANGE
                     if j >= 2 and 1 <= i <= 3:
                         return KEY_LIGHT  # number keys
