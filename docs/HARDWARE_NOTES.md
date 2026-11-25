@@ -33,6 +33,8 @@ From the outside it looks exactly like "the program never ran".
   reported no errors, yet the app opened on the Function screen.
 - **Do this:** wrap the body of `START()` in `IFERR … THEN … END` and draw
   your own error screen in the `THEN` branch, so a failure is visible.
+  **Caveat:** this didn't catch the `AFiles`/`SIZE` failure (§3). Some
+  failures get past `IFERR`, or happen before `START()` runs.
 - Several days of wrong guesses (top-level `LOCAL`, function names, `<>`, …)
   came from this one trap. Rule things out with single-feature test apps, not
   with reasoning.
@@ -62,8 +64,8 @@ From the outside it looks exactly like "the program never ran".
 | `G1:=AFiles("icon.png")` loads an app file (PNG) into a graphic | **Confirmed OK** | t4 |
 | `GROBW_P` / `GROBH_P` and a **scaled** `BLIT_P(G0,dx1,dy1,dx2,dy2,G1,sx1,sy1,sx2,sy2)` | **Confirmed OK** | t4 (icon drawn at 2×) |
 | Listing app files with `AFiles()` (empty parentheses), plus loops, list append, string ops, `TEXTOUT_P` return value, string+number | **Something here FAILS at run time** | t3 |
-| `AFiles()` with empty parentheses is the failing part; use `AFiles` | **Likely** | t3 failed, t4 (`AFiles("name")`) passed. Test t5 isolates it. |
-| `"text"+number` concatenation | Unknown | t5 |
+| Reading the file **list** (`AFiles` or `AFiles()`, without a file name), or `SIZE`, breaks the app **even inside `IFERR`** | **Likely** | Every failing program does this, and no passing one does. t5 and step 2c failed with these wrapped in `IFERR`. t6 isolates it. |
+| `"text"+number` concatenation | Likely OK | t4 drew `"icon.png: "+w+" x "+h` and booted |
 | `TEXTOUT_P` returns the x where the text ends (used to center text) | Unknown | t5. Note: font 7 "IT BOOTS" at x=95 was visibly off-center, so a guessed width isn't good enough. |
 | `MOUSE()`, `WAIT(-1)`, `ISKEYDOWN`, `TICKS`, `CHOOSE` | Unknown | |
 
@@ -78,8 +80,9 @@ From the outside it looks exactly like "the program never ran".
 | `t3-files` | `AFiles()`, loops, lists, string ops, text width | ❌ Function screen |
 | `t4-image` | `IFERR`, loading and scaling a PNG | ✅ image shown |
 | step 2 / step 2b (menu) | the file menu, using `AFiles()` | ❌ Function screen, though Check reported no errors |
-| `t5-diag` | each t3 suspect in its own `IFERR`, results table | pending |
-| step 2c (menu) | `AFiles` without parentheses, `START()` wrapped in `IFERR` | pending |
+| `t5-diag` | each t3 suspect in its own `IFERR`, results table | ❌ Function screen. `IFERR` didn't help. |
+| step 2c (menu) | `AFiles` without parentheses, `START()` wrapped in `IFERR` | ❌ Function screen, no error screen either |
+| `t6-keys` | boot screen, and each suspect runs only when its number key is pressed | pending. If it doesn't boot, merely *containing* one of the commands breaks the app. |
 
 ## 5. How to run a hardware test
 

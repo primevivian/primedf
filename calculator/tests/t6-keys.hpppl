@@ -1,0 +1,122 @@
+#pragma mode( separator(.,;) integer(h32) )
+// Test 6: boot screen + one mini-test per number key.
+// If the app does not boot at all, merely containing one of these
+// commands breaks it. If it boots, press 1..9, 0: a test that drops you
+// back to the Function screen is the culprit (reopen the app, go on).
+
+PdLine(t,y)
+BEGIN
+  RECT_P(G0,0,y,319,y+17,RGB(255,240,245),RGB(255,240,245));
+  TEXTOUT_P(t,G0,10,y+2,2,RGB(62,50,72));
+END;
+
+// 1: read the file list with AFiles (no parentheses)
+PdT1()
+BEGIN
+  LOCAL fl;
+  fl:=AFiles;
+  PdLine("1 AFiles: ok",150);
+END;
+
+// 2: size of the file list
+PdT2()
+BEGIN
+  LOCAL fl,n;
+  fl:=AFiles;
+  n:=SIZE(fl);
+  PdLine("2 SIZE(AFiles): ok, "+n+" files",150);
+END;
+
+// 3: SIZE of a plain list
+PdT3()
+BEGIN
+  LOCAL n;
+  n:=SIZE({1,2,3});
+  PdLine("3 SIZE({1,2,3}): ok, "+n,150);
+END;
+
+// 4: != on strings
+PdT4()
+BEGIN
+  LOCAL n;
+  n:=0;
+  IF "a"!="b" THEN n:=1; END;
+  PdLine("4 != : ok, "+n,150);
+END;
+
+// 5: create a scratch graphic in G9
+PdT5()
+BEGIN
+  DIMGROB_P(G9,320,40);
+  PdLine("5 DIMGROB_P(G9): ok",150);
+END;
+
+// 6: TEXTOUT_P return value (text width)
+PdT6()
+BEGIN
+  LOCAL w;
+  DIMGROB_P(G9,320,40);
+  w:=TEXTOUT_P("IT BOOTS",G9,0,0,7,0);
+  PdLine("6 TEXTOUT_P width: ok, "+w,150);
+END;
+
+// 7: DIM and RIGHT on strings
+PdT7()
+BEGIN
+  LOCAL n,s;
+  n:=DIM("abc.png");
+  s:=RIGHT("abc.png",4);
+  PdLine("7 DIM/RIGHT: ok, "+n+" "+s,150);
+END;
+
+// 8: list append
+PdT8()
+BEGIN
+  LOCAL lst;
+  lst:={};
+  lst(1):="a";
+  lst(2):="b";
+  PdLine("8 list append: ok",150);
+END;
+
+// 9: AFiles with empty parentheses
+PdT9()
+BEGIN
+  LOCAL fl;
+  fl:=AFiles();   // check_ppl: ignore (this test probes it)
+  PdLine("9 AFiles(): ok",150);
+END;
+
+// 0: first file name from the list
+PdT0()
+BEGIN
+  LOCAL fl;
+  fl:=AFiles;
+  PdLine("0 first file: "+fl(1),150);
+END;
+
+START()
+BEGIN
+  LOCAL k;
+  RECT_P(G0,0,0,319,239,RGB(255,240,245),RGB(255,240,245));
+  RECT_P(G0,0,0,319,27,RGB(255,126,166),RGB(255,126,166));
+  TEXTOUT_P("IT BOOTS  -  test 6",G0,80,5,4,RGB(255,255,255));
+  TEXTOUT_P("Press 1 2 3 4 5 6 7 8 9 0 to run a test.",G0,10,40,2,RGB(62,50,72));
+  TEXTOUT_P("If the Function screen appears, that test",G0,10,60,2,RGB(142,130,153));
+  TEXTOUT_P("failed: reopen PrimeDF and try the next.",G0,10,76,2,RGB(142,130,153));
+  TEXTOUT_P("Results:",G0,10,130,2,RGB(62,50,72));
+  TEXTOUT_P("Esc: exit",G0,130,220,2,RGB(62,50,72));
+  REPEAT
+    k:=GETKEY;
+    IF k==42 THEN PdT1(); END;
+    IF k==43 THEN PdT2(); END;
+    IF k==44 THEN PdT3(); END;
+    IF k==37 THEN PdT4(); END;
+    IF k==38 THEN PdT5(); END;
+    IF k==39 THEN PdT6(); END;
+    IF k==32 THEN PdT7(); END;
+    IF k==33 THEN PdT8(); END;
+    IF k==34 THEN PdT9(); END;
+    IF k==47 THEN PdT0(); END;
+  UNTIL k==4;
+END;
