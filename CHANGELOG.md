@@ -6,19 +6,22 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-### Fixed
+### Changed
 
-- Opening PrimeDF showed the Function app's screens instead of the reader
-  (first hardware test). The most likely cause was the calculator rejecting the
-  program. The program now follows the conventions of PPL apps known to work
-  on the Prime: program-wide variables without `LOCAL`, no forward
-  declarations (functions defined before use), `!=` instead of `<>`, no
-  `ELSE IF`, and no locals named like the app variables F1/F2. The reader
-  also replaces the app's Symb/Plot/Num views, so every way into the app
-  opens it.
-- `tools/check_ppl.py` enforces these rules in CI.
+- **Calculator app rebuilt step by step, each step tested on an HP Prime G2.**
+  The 0.2.0 program never got past the Function screens on hardware.
+  - Step 1 (verified): a boot-test app (`calculator/tests/boot.hpppl`) proved
+    that the package, the icon and `START()` work.
+  - Step 2: a pink file menu listing the app's PNG files (up/down, Enter,
+    Esc), and a page view that fits the page to the screen.
+- `tools/check_ppl.py` enforces conventions taken from PPL apps known to
+  work: no top-level `LOCAL`, no forward declarations, `!=` instead of `<>`,
+  no `ELSE IF`, and no locals named like app variables.
 
-## [0.2.0] - 2026-11-25
+## [0.2.0] - 2026-11-25 [WITHDRAWN]
+
+The release was withdrawn: its calculator program didn't start on real
+hardware. The converter and app-package work below carried over.
 
 ### Added
 

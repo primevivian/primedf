@@ -7,9 +7,11 @@ screen or the keypad. It has a plain file menu, smooth panning, and zoom.
 It does nothing else.
 
 > [!NOTE]
-> **Status: 0.2.0, the calculator app is not yet verified on hardware.** The converter has an automated
-> test suite. The calculator program follows the documented PPL APIs, but nobody
-> has run it on a real G2 yet. Bug reports from real devices are very welcome.
+> **Status: being rebuilt step by step on real hardware.** The first all-in-one
+> calculator program (0.2.0) didn't start on a real G2, so it was withdrawn.
+> The app is being rebuilt one tested feature at a time. Working on hardware so far:
+> app package with icon, file menu, and opening a page. Next: zoom and
+> navigation. The converter is complete and tested.
 
 ## How it works
 

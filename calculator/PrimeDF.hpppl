@@ -1,382 +1,150 @@
 #pragma mode( separator(.,;) integer(h32) )
 // =====================================================================
-//  PrimeDF - a light, fast document reader for the HP Prime G2
+//  PrimeDF - a light document reader for the HP Prime G2
 //  https://github.com/primevivian/primedf          MIT License
 //
-//  This is the program of the "PrimeDF" app. Page images produced by
-//  the PrimeDF converter live in the app's Files and are named
-//      <doc>.<NNN>.png        e.g.  thesis.001.png ... thesis.042.png
+//  Built up step by step, each step tested on real hardware.
+//  Step 2: file menu + open a page (fit to screen). Esc goes back.
 //
-//  Keys   : d-pad pan | + / - zoom | LN prev page | LOG next page
-//           Esc back to file menu
-//  Touch  : 1-finger drag pan | pinch zoom | double-tap reset zoom
-//
-//  Style rules (match programs known to compile on the Prime; enforced
-//  by tools/check_ppl.py): program-wide variables are declared with a
-//  plain "name:=value;" (no LOCAL outside functions), every function is
-//  defined before it is used (no forward declarations), "!=" for not
-//  equal, no "ELSE IF", no names that clash with app variables (F0-F9).
+//  Style rules (enforced by tools/check_ppl.py): program-wide variables
+//  as plain "name:=value;", functions defined before use, "!=" for not
+//  equal, no "ELSE IF", no names that clash with app variables.
 // =====================================================================
 
-// ---- tunables -------------------------------------------------------
-pdZMAX:=3;          // max zoom, in screen px per image px
-pdZSTEP:=1.25;      // +/- zoom factor
-pdNUDGE:=40;        // single d-pad press, screen px
-pdOSDMS:=1200;      // page/zoom indicator lifetime, ms
-pdTAPMS:=350;       // max press time for a tap, ms
-pdDTAPMS:=400;      // max gap between the taps of a double tap, ms
+// ---- program-wide state ----------------------------------------------
+pdFiles:={};
+pdBG:=0; pdAcc:=0; pdSel:=0; pdSoft:=0; pdInk:=0; pdMut:=0; pdWhite:=0;
 
-// ---- state ----------------------------------------------------------
-pdNames:={}; pdCounts:={};     // document list
-pdDoc:=""; pdPages:=0; pdPage:=1;
-pdZ:=1; pdVX:=0; pdVY:=0;      // zoom + viewport origin (image px)
-pdPW:=1; pdPH:=1;              // current page image size
-pdSlot:=1;                     // GROB slot holding the current page
-pdC:={0,0,0};                  // page cached in G1/G2/G3 (0 = empty)
-pdU:={0,0,0};                  // last-use time per slot (LRU)
-pdSW:={1,1,1}; pdSH:={1,1,1};
-pdOsd:=0;                      // indicator expiry (TICKS), 0 = hidden
-pdPf:=0;                       // prefetch progress for this page
-pdBG:=0; pdFG:=0;
-
-// ---- small helpers ---------------------------------------------------
-// Integer -> string without depending on the user's number format.
-IToS(n)
+// ---- look ---------------------------------------------------------------
+Colors()
 BEGIN
-  LOCAL s:="", v;
-  v:=ROUND(ABS(n),0);
-  IF v==0 THEN RETURN "0"; END;
-  WHILE v>0 DO
-    s:=CHAR(48+(v MOD 10))+s;
-    v:=IP(v/10);
-  END;
-  RETURN s;
+  pdBG:=RGB(255,240,245);     // page background, blush
+  pdAcc:=RGB(255,126,166);    // header, accent pink
+  pdSel:=RGB(255,196,214);    // selected row
+  pdSoft:=RGB(255,222,232);   // footer
+  pdInk:=RGB(62,50,72);       // text
+  pdMut:=RGB(142,130,153);    // secondary text
+  pdWhite:=RGB(255,255,255);
 END;
 
-Pad3(n)
+// Width in pixels of text t in font f (TEXTOUT_P returns the end x).
+TextW(t,f)
 BEGIN
-  LOCAL s:=IToS(n);
-  WHILE DIM(s)<3 DO s:="0"+s; END;
-  RETURN s;
+  DIMGROB_P(G9,320,40);
+  RETURN TEXTOUT_P(t,G9,0,0,f,0);
 END;
 
-// Digits-only string -> integer, -1 if any non-digit.
-Dig(s)
+// Draw text t horizontally centered at height y.
+Center(t,y,f,c)
 BEGIN
-  LOCAL i,c,v:=0;
-  FOR i FROM 1 TO DIM(s) DO
-    c:=INSTRING("0123456789",MID(s,i,1));
-    IF c==0 THEN RETURN -1; END;
-    v:=v*10+c-1;
-  END;
-  RETURN v;
+  LOCAL w:=TextW(t,f);
+  TEXTOUT_P(t,G0,MAX(0,IP((320-w)/2)),y,f,c);
 END;
 
-// Build the document list from "<doc>.<NNN>.png" files in this app.
-ScanDocs()
+// ---- files ---------------------------------------------------------------
+// All .png files in this app's Files, except the app icon.
+ListPng()
 BEGIN
-  LOCAL fl,i,fn,n,pg,nm,j;
-  pdNames:={}; pdCounts:={};
+  LOCAL fl,i,fn,n;
+  pdFiles:={};
   fl:=AFiles();
   FOR i FROM 1 TO SIZE(fl) DO
     fn:=fl(i); n:=DIM(fn);
-    IF n>8 THEN
-      IF RIGHT(fn,4)==".png" AND MID(fn,n-7,1)=="." THEN
-        pg:=Dig(MID(fn,n-6,3));
-        IF pg>0 THEN
-          nm:=LEFT(fn,n-8);
-          j:=POS(pdNames,nm);
-          IF j==0 THEN
-            j:=SIZE(pdNames)+1;
-            pdNames(j):=nm; pdCounts(j):=pg;
-          ELSE
-            pdCounts(j):=MAX(pdCounts(j),pg);
-          END;
-        END;
+    IF n>4 THEN
+      IF RIGHT(fn,4)==".png" AND fn!="icon.png" THEN
+        pdFiles(SIZE(pdFiles)+1):=fn;
       END;
     END;
   END;
 END;
 
-// ---- page cache: 3 GROB slots (G1..G3), least-recently-used ----------
-LoadSlot(s,fn)
+// ---- screens ---------------------------------------------------------------
+// The file menu; sel = selected row, top = first visible row (8 rows).
+DrawMenu(sel,top)
 BEGIN
-  IF s==1 THEN G1:=AFiles(fn); RETURN {GROBW_P(G1),GROBH_P(G1)}; END;
-  IF s==2 THEN G2:=AFiles(fn); RETURN {GROBW_P(G2),GROBH_P(G2)}; END;
-  G3:=AFiles(fn); RETURN {GROBW_P(G3),GROBH_P(G3)};
-END;
-
-Busy(t)
-BEGIN
-  RECT_P(G0,60,104,259,135,pdFG,pdBG);
-  TEXTOUT_P(t,G0,72,112,3,pdFG);
-END;
-
-// Returns the slot holding page p (loading it if needed), 0 on failure.
-Fetch(p,vis)
-BEGIN
-  LOCAL s,i,d;
-  s:=POS(pdC,p);
-  IF s==0 THEN
-    FOR i FROM 1 TO 3 DO
-      IF i!=pdSlot OR pdC(pdSlot)==0 THEN
-        IF s==0 THEN
-          s:=i;
-        ELSE
-          IF pdU(i)<pdU(s) THEN s:=i; END;
-        END;
-      END;
+  LOCAL i,y,nm,n:=SIZE(pdFiles);
+  RECT_P(G0,0,0,319,239,pdBG,pdBG);
+  RECT_P(G0,0,0,319,27,pdAcc,pdAcc);
+  Center("PrimeDF",5,4,pdWhite);
+  IF n==0 THEN
+    Center("No pages yet",88,4,pdInk);
+    Center("Add .png files to this app's Files",118,2,pdMut);
+    Center("with HP Connectivity Kit",134,2,pdMut);
+  ELSE
+    FOR i FROM top TO MIN(n,top+7) DO
+      y:=32+(i-top)*22;
+      IF i==sel THEN RECT_P(G0,6,y,313,y+20,pdSel,pdSel); END;
+      nm:=pdFiles(i);
+      TEXTOUT_P(LEFT(nm,DIM(nm)-4),G0,16,y+3,3,pdInk);
     END;
-    IF vis THEN Busy("Loading page "+IToS(p)+"..."); END;
-    pdC(s):=0;
-    IFERR
-      d:=LoadSlot(s,pdDoc+"."+Pad3(p)+".png");
-    THEN
-      RETURN 0;
-    END;
-    pdC(s):=p; pdSW(s):=d(1); pdSH(s):=d(2);
   END;
-  pdU(s):=TICKS;
-  RETURN s;
+  RECT_P(G0,0,218,319,239,pdSoft,pdSoft);
+  IF n==0 THEN
+    Center("Esc: exit",222,2,pdInk);
+  ELSE
+    Center("Enter: open      Esc: exit",222,2,pdInk);
+  END;
 END;
 
-FreeAll()
+// Show one page scaled to fit the screen. Esc returns.
+ShowPage(fn)
 BEGIN
-  DIMGROB_P(G1,1,1); DIMGROB_P(G2,1,1); DIMGROB_P(G3,1,1);
-  pdC:={0,0,0}; pdU:={0,0,0};
-END;
-
-// ---- view math -------------------------------------------------------
-FitW()
-BEGIN
-  RETURN 320/pdPW;
-END;
-
-ClampZ(z)
-BEGIN
-  RETURN MAX(MIN(320/pdPW,240/pdPH),MIN(pdZMAX,z));
-END;
-
-// Keep the viewport on the page; center the page when it is smaller.
-ClampView()
-BEGIN
-  LOCAL vw:=320/pdZ, vh:=240/pdZ;
-  IF pdPW<=vw THEN pdVX:=(pdPW-vw)/2; ELSE pdVX:=MAX(0,MIN(pdVX,pdPW-vw)); END;
-  IF pdPH<=vh THEN pdVY:=(pdPH-vh)/2; ELSE pdVY:=MAX(0,MIN(pdVY,pdPH-vh)); END;
-END;
-
-// Zoom to z keeping the image point under screen (sx,sy) fixed.
-ZoomAt(z,sx,sy)
-BEGIN
-  LOCAL ax:=pdVX+sx/pdZ, ay:=pdVY+sy/pdZ;
-  pdZ:=ClampZ(z);
-  pdVX:=ax-sx/pdZ; pdVY:=ay-sy/pdZ;
-  pdOsd:=TICKS+pdOSDMS;
-END;
-
-ResetZoom()
-BEGIN
-  LOCAL cy:=pdVY+120/pdZ;
-  pdZ:=ClampZ(FitW());
-  pdVX:=0; pdVY:=cy-120/pdZ;
-  pdOsd:=TICKS+pdOSDMS;
-END;
-
-// Show page p. fresh=1: reset to fit-width (on open), else keep zoom/x.
-GoPage(p,fresh)
-BEGIN
-  LOCAL s:=Fetch(p,1);
-  IF s==0 THEN
-    MSGBOX("PrimeDF: cannot open "+pdDoc+"."+Pad3(p)+".png");
+  LOCAL w,h,s,dw,dh,x0,y0,k;
+  RECT_P(G0,0,0,319,239,pdBG,pdBG);
+  Center("Loading...",110,3,pdInk);
+  IFERR
+    G1:=AFiles(fn);
+  THEN
+    RECT_P(G0,0,0,319,239,pdBG,pdBG);
+    Center("Could not open",88,4,pdInk);
+    Center(fn,118,3,pdMut);
+    Center("Esc: back",222,2,pdInk);
+    REPEAT k:=GETKEY; UNTIL k==4;
     RETURN 0;
   END;
-  pdSlot:=s; pdPage:=p; pdPW:=pdSW(s); pdPH:=pdSH(s);
-  IF fresh THEN pdZ:=FitW(); pdVX:=0; END;
-  pdZ:=ClampZ(pdZ); pdVY:=0; pdPf:=0;
-  pdOsd:=TICKS+pdOSDMS;
+  w:=GROBW_P(G1); h:=GROBH_P(G1);
+  s:=MIN(320/w,240/h);
+  dw:=ROUND(w*s,0); dh:=ROUND(h*s,0);
+  x0:=IP((320-dw)/2); y0:=IP((240-dh)/2);
+  RECT_P(G0,0,0,319,239,pdAcc,pdAcc);
+  BLIT_P(G0,x0,y0,x0+dw,y0+dh,G1,0,0,w,h);
+  REPEAT k:=GETKEY; UNTIL k==4;
+  DIMGROB_P(G1,1,1);
   RETURN 1;
 END;
 
-// ---- drawing ---------------------------------------------------------
-Render()
+// Menu loop: up/down select, Enter opens, Esc leaves.
+Menu()
 BEGIN
-  LOCAL vx:=ROUND(pdVX,0), vy:=ROUND(pdVY,0);
-  LOCAL sx1,sy1,sx2,sy2,dx1,dy1,dx2,dy2;
-  sx1:=MAX(0,vx); sy1:=MAX(0,vy);
-  sx2:=MIN(pdPW,vx+CEILING(320/pdZ)); sy2:=MIN(pdPH,vy+CEILING(240/pdZ));
-  dx1:=ROUND((sx1-vx)*pdZ,0); dy1:=ROUND((sy1-vy)*pdZ,0);
-  dx2:=ROUND((sx2-vx)*pdZ,0); dy2:=ROUND((sy2-vy)*pdZ,0);
-  // only paint the margins the page does not cover (no flicker)
-  IF dx1>0 THEN RECT_P(G0,0,0,dx1-1,239,pdBG,pdBG); END;
-  IF dx2<320 THEN RECT_P(G0,MAX(0,dx2),0,319,239,pdBG,pdBG); END;
-  IF dy1>0 THEN RECT_P(G0,0,0,319,dy1-1,pdBG,pdBG); END;
-  IF dy2<240 THEN RECT_P(G0,0,MAX(0,dy2),319,239,pdBG,pdBG); END;
-  IF pdSlot==1 THEN BLIT_P(G0,dx1,dy1,dx2,dy2,G1,sx1,sy1,sx2,sy2); END;
-  IF pdSlot==2 THEN BLIT_P(G0,dx1,dy1,dx2,dy2,G2,sx1,sy1,sx2,sy2); END;
-  IF pdSlot==3 THEN BLIT_P(G0,dx1,dy1,dx2,dy2,G3,sx1,sy1,sx2,sy2); END;
-  IF pdOsd>0 THEN
-    RECT_P(G0,196,220,319,239,pdBG,pdBG);
-    TEXTOUT_P(IToS(pdPage)+"/"+IToS(pdPages)+"   "+IToS(100*pdZ/FitW())+"%",G0,202,223,2,pdFG);
-  END;
-END;
-
-// ---- viewer loop -----------------------------------------------------
-Viewer(d)
-BEGIN
-  LOCAL k,pk:=-1,ev,m,fa,fb,a,b,n,pn:=0,now,lt,dt,tw;
-  LOCAL x,y,lx,ly,tx0,ty0,tt0,moved:=0,multi:=0;
-  LOCAL ltt:=-100000,ltx:=0,lty:=0;
-  LOCAL d0,z0,ax,ay,mx,my,dd;
-  LOCAL held,wasHeld:=0,hs:=0,sp,dirty:=1;
-
-  pdDoc:=pdNames(d); pdPages:=pdCounts(d);
-  FreeAll(); pdSlot:=1;
-  RECT_P(G0,0,0,319,239,pdBG,pdBG);
-  IF GoPage(1,1)==0 THEN FreeAll(); RETURN; END;
-  lt:=TICKS;
-
+  LOCAL sel:=1, top:=1, k, n;
+  ListPng();
+  n:=SIZE(pdFiles);
+  DrawMenu(sel,top);
   WHILE 1 DO
-    now:=TICKS; dt:=MIN(now-lt,60); lt:=now;
-
-    // ---- keys: discrete presses ----
-    IF pk>=0 THEN k:=pk; pk:=-1; ELSE k:=GETKEY; END;
-    IF k==4 THEN BREAK; END;                                  // Esc
-    IF k==50 THEN ZoomAt(pdZ*pdZSTEP,160,120); dirty:=1; END; // +
-    IF k==45 THEN ZoomAt(pdZ/pdZSTEP,160,120); dirty:=1; END; // -
-    IF k==25 AND pdPage<pdPages THEN GoPage(pdPage+1,0); dirty:=1; END; // LOG
-    IF k==24 AND pdPage>1 THEN GoPage(pdPage-1,0); dirty:=1; END;       // LN
-    IF NOT wasHeld THEN      // single tap of the d-pad (ignore autorepeat)
-      IF k==2 THEN pdVY:=pdVY-pdNUDGE/pdZ; dirty:=1; END;
-      IF k==12 THEN pdVY:=pdVY+pdNUDGE/pdZ; dirty:=1; END;
-      IF k==7 THEN pdVX:=pdVX-pdNUDGE/pdZ; dirty:=1; END;
-      IF k==8 THEN pdVX:=pdVX+pdNUDGE/pdZ; dirty:=1; END;
-    END;
-
-    // ---- keys: held d-pad, smooth accelerating pan ----
-    held:=ISKEYDOWN(2) OR ISKEYDOWN(12) OR ISKEYDOWN(7) OR ISKEYDOWN(8);
-    IF held THEN hs:=hs+dt; ELSE hs:=0; END;
-    wasHeld:=held;
-    IF hs>180 THEN
-      sp:=(0.3+0.9*MIN(hs-180,900)/900)*dt/pdZ;   // 0.3 -> 1.2 screen px/ms
-      IF ISKEYDOWN(2) THEN pdVY:=pdVY-sp; END;
-      IF ISKEYDOWN(12) THEN pdVY:=pdVY+sp; END;
-      IF ISKEYDOWN(7) THEN pdVX:=pdVX-sp; END;
-      IF ISKEYDOWN(8) THEN pdVX:=pdVX+sp; END;
-      dirty:=1;
-    END;
-
-    // ---- touch ----
-    m:=MOUSE(); fa:=m(1); fb:=m(2);
-    a:=SIZE(fa)>=2; b:=SIZE(fb)>=2; n:=a+b;
-    IF n==2 THEN                                   // pinch (+ 2-finger pan)
-      mx:=(fa(1)+fb(1))/2; my:=(fa(2)+fb(2))/2;
-      dd:=MAX(1,((fa(1)-fb(1))^2+(fa(2)-fb(2))^2)^0.5);
-      IF pn!=2 THEN
-        d0:=dd; z0:=pdZ; ax:=pdVX+mx/pdZ; ay:=pdVY+my/pdZ; multi:=1;
-        IF pn==0 THEN tt0:=now; END;
-      ELSE
-        pdZ:=ClampZ(z0*dd/d0);
-        pdVX:=ax-mx/pdZ; pdVY:=ay-my/pdZ;
-        pdOsd:=now+pdOSDMS; dirty:=1;
+    k:=GETKEY;
+    IF k==4 THEN BREAK; END;
+    IF n>0 THEN
+      IF k==2 AND sel>1 THEN
+        sel:=sel-1;
+        IF sel<top THEN top:=sel; END;
+        DrawMenu(sel,top);
       END;
-    END;
-    IF n==1 THEN                                   // one-finger drag
-      IF a THEN x:=fa(1); y:=fa(2); ELSE x:=fb(1); y:=fb(2); END;
-      IF pn==0 THEN tx0:=x; ty0:=y; tt0:=now; moved:=0; multi:=0; END;
-      IF pn==2 THEN moved:=1; END;     // pinch -> drag: no dead zone
-      IF pn!=1 THEN
-        lx:=x; ly:=y;
-      ELSE
-        IF ABS(x-tx0)+ABS(y-ty0)>8 THEN moved:=1; END;
-        IF moved AND (x!=lx OR y!=ly) THEN
-          pdVX:=pdVX-(x-lx)/pdZ; pdVY:=pdVY-(y-ly)/pdZ;
-          lx:=x; ly:=y; dirty:=1;
-        END;
+      IF k==12 AND sel<n THEN
+        sel:=sel+1;
+        IF sel>top+7 THEN top:=sel-7; END;
+        DrawMenu(sel,top);
       END;
-    END;
-    IF n==0 AND pn>0 THEN                          // finger(s) lifted
-      IF NOT moved AND NOT multi AND now-tt0<pdTAPMS THEN
-        IF now-ltt<pdDTAPMS AND ABS(tx0-ltx)+ABS(ty0-lty)<40 THEN
-          ResetZoom(); dirty:=1; ltt:=-100000;  // double tap
-        ELSE
-          ltt:=now; ltx:=tx0; lty:=ty0;
-        END;
-      END;
-    END;
-    pn:=n;
-
-    // ---- draw only when something changed ----
-    IF pdOsd>0 AND now>pdOsd THEN pdOsd:=0; dirty:=1; END;
-    IF dirty THEN ClampView(); Render(); dirty:=0; END;
-
-    // ---- idle: prefetch a neighbour page, then sleep until input ----
-    IF n==0 AND NOT held AND k<0 THEN
-      IF pdPf<2 THEN
-        pdPf:=pdPf+1;
-        IF pdPf==1 AND pdPage<pdPages THEN Fetch(pdPage+1,0); END;
-        IF pdPf==2 AND pdPage>1 THEN Fetch(pdPage-1,0); END;
-        pdU(pdSlot):=TICKS;
-      ELSE
-        IF pdOsd==0 THEN
-          tw:=TICKS;
-          ev:=WAIT(-1);
-          IF TYPE(ev)==6 THEN
-            // A touch began while asleep. If it is fresh (not a stale
-            // queued event), seed the tap tracker so very quick taps
-            // are not lost before MOUSE() sees them.
-            IF SIZE(ev)>=3 AND TICKS-tw>30 THEN
-              IF ev(1)==0 THEN
-                tx0:=ev(2); ty0:=ev(3); lx:=tx0; ly:=ty0;
-                tt0:=TICKS; moved:=0; multi:=0; pn:=1;
-              END;
-            END;
-          ELSE
-            IF ev>=0 THEN pk:=ev; END;
-          END;
-          lt:=TICKS;
-        END;
+      IF k==30 THEN
+        ShowPage(pdFiles(sel));
+        DrawMenu(sel,top);
       END;
     END;
   END;
-  FreeAll();
 END;
 
-// ---- the reader: file menu -> viewer, then back to Home -------------
-Reader()
+// ---- entry point (runs when the app is opened; confirmed on hardware) ---
+START()
 BEGIN
-  LOCAL c:=1, i, items;
-  pdBG:=RGB(40,40,40); pdFG:=RGB(255,255,255);
-  ScanDocs();
-  IF SIZE(pdNames)==0 THEN
-    MSGBOX("PrimeDF: no documents found. Convert a PDF with the PrimeDF converter and copy the .png pages into this app's Files.");
-  ELSE
-    items:={};
-    FOR i FROM 1 TO SIZE(pdNames) DO
-      items(i):=pdNames(i)+"   ("+IToS(pdCounts(i))+" pages)";
-    END;
-    WHILE 1 DO
-      IF CHOOSE(c,"PrimeDF - open a document",items)==0 THEN BREAK; END;
-      Viewer(c);
-    END;
-    FreeAll();
-  END;
-  STARTVIEW(-1,1);   // leave to Home so the app's own views never show
-END;
-
-// ---- app entry points --------------------------------------------------
-// Opening an app shows its default view (Symb). Replacing the views with
-// the reader means every way into PrimeDF opens the reader.
-Symb()
-BEGIN
-  Reader();
-END;
-
-Plot()
-BEGIN
-  Reader();
-END;
-
-Num()
-BEGIN
-  Reader();
+  Colors();
+  Menu();
 END;
