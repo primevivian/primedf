@@ -1,4 +1,4 @@
-"""The PrimeDF icon: an HP Prime G2-style calculator showing a PDF page.
+"""The PrimeDF mascot: a pink HP Prime G2-style calculator with a happy face.
 
 Used for the window icon and, through ``packaging/make_icon.py``, for the
 Windows .exe icon. Drawing it in code keeps binary assets out of the repo.
@@ -11,20 +11,19 @@ from .png import PNG_RGBA, encode_png
 
 Color = tuple[int, int, int]
 
-BODY: Color = (38, 40, 45)
-RIM: Color = (150, 156, 166)
-BEZEL: Color = (12, 12, 14)
-SCREEN_BAR: Color = (52, 84, 150)
-SCREEN_BG: Color = (214, 224, 238)
-PAGE: Color = (255, 255, 255)
-PAGE_TEXT: Color = (150, 156, 170)
-PAGE_TITLE: Color = (255, 126, 166)  # the converter's accent color
-DPAD: Color = (196, 200, 208)
-DPAD_CENTER: Color = (120, 124, 134)
-KEY_DARK: Color = (74, 77, 84)
-KEY_LIGHT: Color = (226, 228, 233)
-KEY_BLUE: Color = (70, 130, 220)
-KEY_ORANGE: Color = (240, 150, 60)
+BODY: Color = (255, 143, 171)
+RIM: Color = (232, 96, 140)
+BEZEL: Color = (122, 52, 88)
+SCREEN_BAR: Color = (178, 160, 255)
+SCREEN_BG: Color = (255, 246, 236)
+INK: Color = (62, 50, 72)
+BLUSH: Color = (255, 190, 206)
+DPAD: Color = (255, 255, 255)
+DPAD_CENTER: Color = (232, 96, 140)
+KEY_DARK: Color = (226, 98, 140)
+KEY_LIGHT: Color = (255, 255, 255)
+KEY_BLUE: Color = (178, 160, 255)  # Shift, pastel
+KEY_ORANGE: Color = (255, 196, 140)  # Alpha, pastel
 
 _KEY_W, _KEY_H, _KEY_R = 0.075, 0.045, 0.008
 _KEY_COLS = [0.2765 + i * 0.093 for i in range(5)]
@@ -43,15 +42,17 @@ def _in_rrect(u: float, v: float, x0: float, y0: float, x1: float, y1: float,
 
 
 def _screen(u: float, v: float) -> Color:
-    if v < 0.13:
+    if v < 0.125:
         return SCREEN_BAR  # the Prime's title bar
-    if 0.33 <= u <= 0.67 and 0.15 <= v <= 0.39:  # a document page
-        if 0.37 <= u <= 0.55 and 0.18 <= v <= 0.205:
-            return PAGE_TITLE
-        for i, ly in enumerate((0.235, 0.27, 0.305, 0.34)):
-            if 0.37 <= u <= (0.57 if i == 3 else 0.63) and ly <= v <= ly + 0.015:
-                return PAGE_TEXT
-        return PAGE
+    for ex in (0.42, 0.58):  # eyes
+        if (u - ex) ** 2 + (v - 0.225) ** 2 <= 0.03**2:
+            return INK
+    d = ((u - 0.5) ** 2 + (v - 0.245) ** 2) ** 0.5  # smile
+    if 0.058 <= d <= 0.082 and v > 0.275:
+        return INK
+    for bx in (0.355, 0.645):  # blush
+        if ((u - bx) / 0.036) ** 2 + ((v - 0.3) / 0.02) ** 2 <= 1:
+            return BLUSH
     return SCREEN_BG
 
 
