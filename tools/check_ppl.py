@@ -10,6 +10,8 @@ Structure
 * a function defined twice
 
 Proven on hardware (docs/HARDWARE_NOTES.md):
+* a function parameter named "i" is a syntax error: i is the imaginary unit
+  (test 8, editor Check pointed at it). "e" is treated the same as a precaution.
 * "a!=b" is NOT a not-equal test in PPL. It parses as a! = b (factorial),
   compiles, passes the editor's Check, and crashes at run time on strings,
   silently and past IFERR. For not-equal use "<>", "≠" or NOT(a==b)
@@ -91,6 +93,10 @@ def check(path: Path) -> list[str]:
         if not m or m.group(1).upper() in OPENERS | {"END", "RETURN", "LOCAL"}:
             continue
         name, is_decl = m.group(1), bool(m.group(3))
+        for param in (p.strip() for p in m.group(2).split(",")):
+            if param in ("i", "e"):
+                errors.append(f"{path}:{i}: parameter named '{param}' is a syntax error "
+                              "(i is the imaginary unit; e is likely the same); rename it")
         if is_decl:
             errors.append(f"{path}:{i}: forward declaration of {name}(); "
                           "define functions before use instead")

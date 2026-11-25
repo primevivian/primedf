@@ -14,9 +14,9 @@ BEGIN
   RETURN RGB(255,240,245);
 END;
 
-PdPick(lst,i)
+PdPick(lst,j)
 BEGIN
-  RETURN lst(i);
+  RETURN lst(j);
 END;
 
 // exact copies of the step 2d text helpers

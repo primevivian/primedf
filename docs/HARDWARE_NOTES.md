@@ -54,7 +54,9 @@ END;
 
 - A run-time failure inside `START()` shows **no message**. You land on the
   base app's screen (§1).
-- The program editor's **Check** finds **compile** errors only.
+- The program editor's **Check** finds **compile** errors only. If an app doesn't start, always
+  run Check first: when it does find something, the cursor lands right on it.
+  For example, a parameter named `i` (§4).
 - `IFERR … THEN … END` around `START()`'s body catches *some* errors, but not
   the `!=` failure. Keep it anyway, because it turns other failures into a
   visible screen.
@@ -100,6 +102,7 @@ END;
 | List element assignment `lst(1):=…`, `lst(2):=…` | **Confirmed OK** | t6 key 8 |
 | **`a != b`** | **BROKEN**: it's `a! = b` (§1) | t6 key 4 |
 | `<>`, `≠`, `NOT(a==b)` as not-equal | **Confirmed OK** | t7 keys 1–4 |
+| **A function parameter named `i`**, e.g. `PdPick(lst,i)` | **Syntax error** (Check points at the `i`). `i` is the imaginary unit. `LOCAL i` and `FOR i` passed Check (step 2). | t8 |
 | `MOUSE()`, `WAIT(-1)`, `ISKEYDOWN`, `TICKS`, `CHOOSE` | Unknown | |
 
 ## 5. Test log
@@ -117,7 +120,7 @@ END;
 | `t6-keys` | each suspect on its own number key | ✅ boots. Every key OK **except 4 (`!=`)**, which crashes. |
 | `t7-notequal` | `<>`, `≠`, `NOT(==)`, and what `!=` computes on numbers | ✅ all keys OK |
 | step 2d (menu) | step 2c with `==` only | ❌ Function screen. Its `IFERR` error screen didn't show either, so either the failure escapes `IFERR` or the error screen's own text helpers fail. |
-| `t8-menu-parts` | each construct step 2d uses that no passing test covered: `FOR`, `<=`/`>=`, user functions inside arguments, `LEFT`/`MIN`/`MAX`/`IP`, a list parameter, `WHILE` + `AND` chain, an apostrophe in a string, and step 2d's exact text helpers | pending |
+| `t8-menu-parts` | each construct step 2d uses that no passing test covered: `FOR`, `<=`/`>=`, user functions inside arguments, `LEFT`/`MIN`/`MAX`/`IP`, a list parameter, `WHILE` + `AND` chain, an apostrophe in a string, and step 2d's exact text helpers | ❌ didn't boot: Check reported a **syntax error** at the parameter `i` in `PdPick(lst,i)`. Renamed, and re-testing. |
 
 ## 6. How to run a hardware test
 
