@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Check block balance and required entry points
-        run: python3 tools/check_ppl.py calculator/PrimeDF.hpppl
+        run: python3 tools/check_ppl.py calculator/PrimeDF.hpppl calculator/tests/*.hpppl
       - name: Reference .hpappdir samples parse and round-trip byte-exactly
         run: python3 tools/hpprime_tlv.py check docs/format-samples/*/*.hpappdir/*
       - name: Program injection reproduces a real Connectivity Kit export byte-for-byte
