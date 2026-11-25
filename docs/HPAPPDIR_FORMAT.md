@@ -36,11 +36,10 @@ PRIMEDF.hpappdir/
 - **Hypothesis:** any other file in the folder is one of the app's files
   (`AFiles`). That's how PrimeDF stores its page images. Sample 03 (see §6)
   will confirm it.
-- **Hypothesis (community reports):** a file named `icon.png` (or `icon.jpg`)
-  becomes the app's icon in the Apps library. Forum posts cite 38×38 px and
-  say Connectivity Kit scales pictures to 38×38. One report says the icon only
-  appears after the app is edited and saved once on the calculator. PrimeDF
-  ships a 38×38 `icon.png`; hardware confirmation is pending.
+- **Confirmed (HP Prime G2, 2026-11-25):** a 38×38 PNG named `icon.png` in the
+  `.hpappdir` folder becomes the app's icon in the Apps library. It showed up
+  right after the PrimeDF package was imported with Connectivity Kit. Forum
+  posts also mention `icon.jpg`; that's untested.
 
 ## 2. `.hpappnote`
 
@@ -185,8 +184,7 @@ Connectivity Kit does. PrimeDF's release package is built this way, from
 ## 5. Open questions
 
 1. ~~Where the program source lives.~~ Answered by sample 02 (§4.3).
-2. **App files.** Are they plain files in the folder (likely), and is
-   `icon.png` used as the app icon? → sample 03
+2. **App files.** Are they plain files in the folder? (`icon.png` is, see §1.) → sample 03
 3. The meaning of the header's `extra` word, the file-level ints (group
    `0xFF`), the tag flag bit, and the non-BCD `0x08` payloads (for example
    `ff 0f 00 00 00 00 00 01`, and `...40` as the top byte).
