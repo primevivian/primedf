@@ -1,0 +1,25 @@
+#pragma mode( separator(.,;) integer(h32) )
+// Test 1: program-wide variables declared outside functions.
+pdA:=5;
+pdB:={};
+pdC:=0; pdD:=0;
+
+Boot(where)
+BEGIN
+  LOCAL k;
+  RECT_P(G0,0,0,319,239,RGB(255,143,171),RGB(255,143,171));
+  TEXTOUT_P("IT BOOTS",G0,95,60,7,RGB(255,255,255));
+  TEXTOUT_P("test 1: globals",G0,90,110,4,RGB(62,50,72));
+  IF pdA==5 THEN
+    TEXTOUT_P("pdA is 5: ok",G0,105,140,3,RGB(62,50,72));
+  END;
+  TEXTOUT_P("press Esc",G0,125,200,3,RGB(62,50,72));
+  REPEAT
+    k:=GETKEY;
+  UNTIL k==4;
+END;
+
+START()
+BEGIN
+  Boot("START");
+END;

@@ -127,20 +127,21 @@ jobs:
           name: PrimeDF.hpappdir.zip
           path: PrimeDF.hpappdir.zip
           if-no-files-found: error
-      - name: Build the boot-test package (minimal program, same template)
+      - name: Build the hardware test packages (calculator/tests/*.hpppl)
         run: |
-          python3 tools/check_ppl.py calculator/tests/boot.hpppl
-          python3 tools/hpprime_tlv.py build-app \
-            --template calculator/app-template/PRIMEDF.hpappdir \
-            --program calculator/tests/boot.hpppl \
-            --icon build/icon.png \
-            --out boot/PRIMEDF.hpappdir
-          python3 tools/hpprime_tlv.py check boot/PRIMEDF.hpappdir/*
-          cd boot && zip -r ../boot-test.hpappdir.zip PRIMEDF.hpappdir
+          python3 tools/check_ppl.py calculator/tests/*.hpppl
+          for src in calculator/tests/*.hpppl; do
+            name=$(basename "$src" .hpppl)
+            python3 tools/hpprime_tlv.py build-app \
+              --template calculator/app-template/PRIMEDF.hpappdir \
+              --program "$src" --icon build/icon.png \
+              --out "tests/$name/PRIMEDF.hpappdir"
+            python3 tools/hpprime_tlv.py check tests/$name/PRIMEDF.hpappdir/*
+          done
       - uses: actions/upload-artifact@v4
         with:
-          name: boot-test.hpappdir.zip
-          path: boot-test.hpappdir.zip
+          name: hardware-tests
+          path: tests/
           if-no-files-found: error
 
   release:
