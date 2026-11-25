@@ -53,7 +53,7 @@ the bottom-right corner after each change.
 ## Quick start
 
 **Requirements:** an HP Prime G2 (it should also run on a G1) on current firmware,
-[HP Connectivity Kit](https://www.hpcalc.org/connectivity/), and Python 3.9+.
+[HP Connectivity Kit](https://www.hpcalc.org/connectivity/), and Python 3.10+.
 
 ```sh
 # 1. Convert your PDFs on the PC

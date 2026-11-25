@@ -5,7 +5,7 @@ runs on the calculator.
 
 ## 1. Install the converter (PC)
 
-You need Python 3.9 or newer.
+You need Python 3.10 or newer.
 
 ```sh
 git clone https://github.com/primevivian/primedf.git

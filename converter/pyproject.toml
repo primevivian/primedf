@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Convert PDFs into page images for the PrimeDF reader on the HP Prime G2"
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "PyMuPDF>=1.24.3",
     "Pillow>=10.0",
@@ -42,7 +42,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py310"
 src = ["src", "tests"]
 
 [tool.ruff.lint]

@@ -161,7 +161,7 @@ def convert_pdf(
         # turning pages: fit the median content width to `width` px.
         widths = [
             (b.width if b is not None else page.rect.width)
-            for b, page in zip(boxes, doc)
+            for b, page in zip(boxes, doc, strict=True)
         ]
         zoom = width / max(1.0, statistics.median(widths))
 
