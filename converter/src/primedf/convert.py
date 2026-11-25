@@ -12,9 +12,9 @@ from __future__ import annotations
 import io
 import re
 import statistics
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Optional
 
 import pymupdf
 from PIL import Image
@@ -59,7 +59,7 @@ def page_filename(doc: str, page: int) -> str:
     return f"{doc}.{page:03d}.png"
 
 
-def content_box(page: pymupdf.Page) -> Optional[pymupdf.Rect]:
+def content_box(page: pymupdf.Page) -> pymupdf.Rect | None:
     """Bounding box of non-white pixels, in page.rect coordinates.
 
     Returns None for a blank page.
@@ -96,7 +96,7 @@ def content_box(page: pymupdf.Page) -> Optional[pymupdf.Rect]:
     return box & pymupdf.Rect(0, 0, r.width, r.height)
 
 
-def _render_page(page: pymupdf.Page, zoom: float, box: Optional[pymupdf.Rect],
+def _render_page(page: pymupdf.Page, zoom: float, box: pymupdf.Rect | None,
                  rgb: bool) -> bytes:
     pix = page.get_pixmap(
         matrix=pymupdf.Matrix(zoom, zoom),
@@ -122,12 +122,12 @@ def convert_pdf(
     pdf_path: Path,
     out_dir: Path,
     *,
-    name: Optional[str] = None,
+    name: str | None = None,
     width: int = DEFAULT_WIDTH,
     trim: bool = True,
     rgb: bool = False,
-    password: Optional[str] = None,
-    progress: Optional[Callable[[int, int], None]] = None,
+    password: str | None = None,
+    progress: Callable[[int, int], None] | None = None,
 ) -> ConvertedDocument:
     """Convert ``pdf_path`` into PrimeDF page images inside ``out_dir``.
 
@@ -153,7 +153,7 @@ def convert_pdf(
                 f"{pdf_path} has {doc.page_count} pages; the limit is {MAX_PAGES}"
             )
 
-        boxes: list[Optional[pymupdf.Rect]] = []
+        boxes: list[pymupdf.Rect | None] = []
         for page in doc:
             boxes.append(content_box(page) if trim else None)
 
